@@ -1,0 +1,28 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: aromasabor-mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: aromasabor
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: aromasabor-api
+    ports:
+      - '4000:4000'
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/aromasabor
+      JWT_SECRET: change-this-in-production
+      API_PORT: 4000
+      WEB_URL: http://localhost:3000
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo-data:
