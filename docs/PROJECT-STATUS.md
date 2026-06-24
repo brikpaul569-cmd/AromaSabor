@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-24
-> **Phase:** Sprint 1 — Stories 1–4 (Auth + Menu CRUD) ✅
+> **Phase:** Sprint 1 — Complete (Stories 1–5) ✅
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -71,7 +71,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 15, TypeScript, Tailwind CSS, shadcn/ui |
+| Frontend | Next.js 15, TypeScript, Tailwind CSS, custom dark-theme components |
 | Backend | NestJS, TypeScript |
 | Database | MongoDB Atlas (Mongoose) |
 | Auth | JWT (httpOnly cookies), bcrypt |
@@ -110,7 +110,7 @@ Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications)
 | MVP-DECISION.md | Says "Next.js 14" | ✅ Updated to Next.js 15 |
 | SPRINT-PLAN.md | Old 47-story, 11-week plan | ❌ **Deprecated** — use MVP-SCOPE-FINAL.md |
 | MVP-BACKLOG.md | 47 stories, not 20 | ❌ **Deprecated** — use MVP-SCOPE-FINAL.md |
-| DOMAIN-MODEL.md | Includes cut fields (clientEmail, clientPhone, eventDate, durationMinutes, quantity) | ⚠️ **Pending update** — schemas in code match final model; doc is stale but non-blocking |
+| DOMAIN-MODEL.md | Missing `isActive` on Menu, `description` shown as required, no `_id` on MenuItem | ✅ **Updated** in session — now matches actual schemas |
 | Case study v2 | Mentions React Native, FCM, Socket.IO, OTP | All removed for MVP |
 
 ---
@@ -135,7 +135,7 @@ Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications)
 
 ### Next
 
-Sprint 1 continues: Stories 2–5 (Menu CRUD).
+Sprint 1 (Stories 1–5).
 
 ---
 
@@ -264,7 +264,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 - ✅ Manage items (add, edit, delete items with category + price)
 - ✅ Publish menu (toggle active, public page at `/menu/:slug`)
 
-### Next up: Sprint 2 — Proposals (Stories 6–9)
+### Next up: Sprint 2 — Plate Builder (Stories 6–8)
 
 ---
 

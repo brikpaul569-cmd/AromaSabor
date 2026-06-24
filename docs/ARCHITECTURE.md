@@ -35,14 +35,17 @@ aromasabor/
 │       │   ├── (admin)/
 │       │   │   ├── login/          # Admin login form
 │       │   │   ├── dashboard/      # Proposal list
-│       │   │   ├── menus/          # Menu management
-│       │   │   └── proposals/      # Proposal management
+│   │   │   ├── menus/          # Menu management
+│   │   │   │   ├── [id]/       # Menu editor (items, publish)
+│   │   │   │   └── new/        # Create menu form
+│   │   │   └── proposals/      # Proposal management
 │       │   └── (public)/
 │       │       ├── menu/[slug]/    # Public menu view
 │       │       └── prop/[token]/   # Client proposal view (Plate Builder)
 │       ├── lib/
-│       │   └── utils.ts            # cn() helper (clsx + tailwind-merge)
-│       ├── components/             # Reusable UI (shadcn/ui stubs)
+│       │   ├── api.ts             # Fetch wrapper (credentials: include, error handling)
+│       │   └── utils.ts           # cn() helper (clsx + tailwind-merge)
+│       ├── components/            # Reusable UI (custom dark-theme components)
 │       ├── hooks/                  # Custom React hooks
 │       ├── stores/                 # Zustand stores (Plate Builder)
 │       ├── next.config.js
