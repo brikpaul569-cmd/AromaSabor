@@ -368,4 +368,44 @@ pnpm typecheck        # TypeScript check all packages
 ### Sprint 7 — Approval (Stories 19-20)
 - Story 19 — Approve / Reject
 - Story 20 — In-app notifications
+
+---
+
+## 14. Session Record — 2026-06-25 (Sprint 4-5 continuation)
+
+### What was done
+
+1. **Story 13 — Send Proposal**: Added `ProposalsService.send(id)` with status validation (`borrador` → `enviado`), sets `expiresAt = now + 20 min`, creates notification. Added `PATCH /:id/send` route. Frontend: Send button, confirmation dialog, public URL + copy link, read-only mode after send.
+
+2. **B1 fix**: `create()` now sets `expiresAt: new Date(0)` for drafts — schema had `required: true` but service never assigned it, causing Mongoose validation errors.
+
+3. **B2 — `viewedAt` approach**: Added optional `viewedAt?: Date` to Proposal schema instead of a new `activo` status. `findByToken()` sets it on first client view. Admin detail shows "Active" badge + timestamp.
+
+4. **Story 14 — Client Access**: Built full client-facing `/prop/[token]` page with proposal details, pricing, status banners.
+
+5. **Story 15 — Expiration**: `findByToken()` auto-expires if `enviado` and past `expiresAt`. Public page shows expired banner.
+
+6. **Story 16 — QR Code**: Generates QR via `qrcode` package on admin detail page for sent/expired proposals.
+
+### Files created
+- `docs/STORY-13-REPORT.md`
+- `docs/STORY-14-15-16-REPORT.md` (combined in PROJECT-STATUS)
+- `docs/SPRINT-5-PLAN.md`
+
+### Files modified
+- `apps/api/src/schemas/proposal.schema.ts` — added `viewedAt`
+- `apps/api/src/modules/proposals/proposals.service.ts` — `send()`, `findByToken()` updates, B1 fix
+- `apps/api/src/modules/proposals/proposals.controller.ts` — `PATCH /:id/send`
+- `apps/web/app/(admin)/proposals/[id]/page.tsx` — send flow + QR + viewedAt
+- `apps/web/app/(public)/prop/[token]/page.tsx` — full client view
+- `docs/PROJECT-STATUS.md`, `docs/ENGRAM-MEMORY.md`
+
+### Verification
+- `pnpm typecheck` — ✅ all 4 packages
+- `pnpm build` — ✅ API + Web
+- Commits: `4c93492` (Story 13), `7bafd7b` (Stories 14-16 + B1/B2)
+
+### Progress
+- 16 / 20 stories complete (80%)
+- Next: Sprint 6 — Negotiation (Stories 17-18)
 ```
