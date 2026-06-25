@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-25
-> **Phase:** Sprint 4 — Proposals (Story 12 ✅, Story 13 ✅)
+> **Phase:** Sprint 5 — Proposals (Stories 14 ✅, 15 ✅, 16 ✅)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -57,9 +57,9 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 11 | Live pricing | Plate Builder | S3 |
 | 12 | Create proposal | Proposals | S4 | ✅
 | 13 | Send proposal | Proposals | S4 | ✅
-| 14 | Client access | Proposals | S5 |
-| 15 | Expiration | Proposals | S5 |
-| 16 | QR code | Proposals | S5 |
+| 14 | Client access | Proposals | S5 | ✅
+| 15 | Expiration | Proposals | S5 | ✅
+| 16 | QR code | Proposals | S5 | ✅
 | 17 | Client modifies | Negotiation | S6 |
 | 18 | Chef modifies | Negotiation | S6 |
 | 19 | Approve / Reject | Negotiation | S7 |
@@ -91,6 +91,7 @@ Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
 Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual) ✅
 Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) ✅
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
+Sprint 5 (1 week)  → Stories 14-16 (Client access, Expiration, QR) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing)
 Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications)
@@ -443,7 +444,41 @@ All three Sprint 3 stories (9–11) are implemented.
 
 ---
 
-## 18. Sprint 1 Complete 🎉
+## 18. Sprint 5 — Stories 14-16 (Client Access, Expiration, QR) ✅
+
+### What was built
+
+**B2 — `viewedAt` field:**
+- Added optional `viewedAt?: Date` to Proposal schema
+- `findByToken()` sets `viewedAt` on first client access (Story 14)
+- `findByToken()` auto-expires if `enviado` and `expiresAt < now` (Story 15)
+
+**Story 14 — Client Access:**
+- `/prop/[token]` public page renders full proposal: client name, event date, menu, items, pricing breakdown, status badges
+- Active/Expired banners for contextual feedback
+- Admin detail shows "Active" badge (when `enviado` + `viewedAt`) and viewedAt timestamp
+
+**Story 15 — Expiration:**
+- Auto-expiration on access: if `enviado` and past `expiresAt`, status → `expirado`
+- Public page shows red expired banner with instructions to contact chef
+- Admin detail shows Expired badge
+
+**Story 16 — QR Code:**
+- Generates QR from public URL using `qrcode` package (already installed)
+- Displayed next to public URL on admin `/proposals/[id]` page for sent/expired proposals
+
+### Files modified
+
+| File | Change |
+|------|--------|
+| `apps/api/src/schemas/proposal.schema.ts` | Added optional `viewedAt` field |
+| `apps/api/src/modules/proposals/proposals.service.ts` | `findByToken()`: sets `viewedAt` + auto-expire |
+| `apps/web/app/(public)/prop/[token]/page.tsx` | Full client-facing proposal view |
+| `apps/web/app/(admin)/proposals/[id]/page.tsx` | Added QR code, viewedAt, Active badge |
+
+---
+
+## 19. Sprint 1 Complete 🎉
 
 Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
@@ -455,7 +490,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 18. Risks (Final Assessment)
+## 20. Risks (Final Assessment)
 
 | # | Risk | Mitigation |
 |---|------|------------|
@@ -468,7 +503,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 19. What Success Looks Like (MVP)
+## 21. What Success Looks Like (MVP)
 
 - Chef can log in, create menus, add items
 - Client opens a link, sees a visual plate builder, builds a plate

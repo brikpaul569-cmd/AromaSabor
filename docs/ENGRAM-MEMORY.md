@@ -2,7 +2,7 @@
 
 > **Purpose:** Persistent project memory for AI-assisted development
 > **Binary:** `C:\Users\brik3\Documents\Desarrollos\engram-bin\engram_1.17.0_windows_amd64`
-> **Last save:** Observation #10 — Sprint 4 (Story 13) — Send Proposal
+> **Last save:** Observation #11 — Sprint 5 (Stories 14-16) — Client Access, Expiration, QR Code
 
 ---
 
@@ -353,5 +353,19 @@ pnpm typecheck        # TypeScript check all packages
 ### Sprint 4 complete
 - Story 12 — Create Proposal ✅
 - Story 13 — Send Proposal ✅
-```
 
+### Sprint 5 complete
+- Story 14 — Client Access ✅
+- Story 15 — Expiration ✅
+- Story 16 — QR Code ✅
+
+## Sprint plan
+
+### Sprint 6 — Negotiation (Stories 17-18)
+- Story 17 — Client modifies proposal
+- Story 18 — Chef modifies proposal
+
+### Sprint 7 — Approval (Stories 19-20)
+- Story 19 — Approve / Reject
+- Story 20 — In-app notifications
+```

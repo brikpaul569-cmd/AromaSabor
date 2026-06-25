@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import PricingBreakdown from '@/components/PricingBreakdown';
+import QRCode from 'qrcode';
 
 type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
 
@@ -41,6 +42,7 @@ interface Proposal {
   createdBy: AdminRef;
   createdAt: string;
   expiresAt: string;
+  viewedAt?: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -75,6 +77,16 @@ function formatDate(date: string): string {
   });
 }
 
+function formatDateTime(date: string): string {
+  return new Date(date).toLocaleString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default function ProposalDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -87,6 +99,8 @@ export default function ProposalDetailPage() {
   const [sendError, setSendError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const qrGenerated = useRef(false);
 
   useEffect(() => {
     api.get<Proposal>(`/proposals/id/${id}`)
@@ -95,12 +109,15 @@ export default function ProposalDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const loadProposal = () => {
-    api.get<Proposal>(`/proposals/id/${id}`)
-      .then(setProposal)
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
-  };
+  useEffect(() => {
+    if (proposal && !qrGenerated.current) {
+      const url = `${window.location.origin}/prop/${proposal.token}`;
+      QRCode.toDataURL(url, { width: 200, margin: 1 })
+        .then(setQrDataUrl)
+        .catch(() => {});
+      qrGenerated.current = true;
+    }
+  }, [proposal]);
 
   const handleSend = async () => {
     setSending(true);
@@ -123,7 +140,6 @@ export default function ProposalDetailPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback for older browsers
       const textarea = document.createElement('textarea');
       textarea.value = url;
       document.body.appendChild(textarea);
@@ -161,6 +177,8 @@ export default function ProposalDetailPage() {
   const canSend = proposal.status === 'borrador';
   const isSentOrExpired = ['enviado', 'expirado'].includes(proposal.status);
   const isTerminal = ['aceptado', 'rechazado'].includes(proposal.status);
+  const clientViewed = !!proposal.viewedAt;
+  const isActive = proposal.status === 'enviado' && clientViewed;
 
   return (
     <div className="mx-auto max-w-3xl p-8">
@@ -173,6 +191,11 @@ export default function ProposalDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {isActive && (
+            <span className="rounded-full bg-green-500/20 px-4 py-1.5 text-sm font-medium text-green-300">
+              Active
+            </span>
+          )}
           <span className={`rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
             {STATUS_LABELS[proposal.status] || proposal.status}
           </span>
@@ -195,18 +218,27 @@ export default function ProposalDetailPage() {
         </div>
       )}
 
-      {/* Public URL for sent proposals */}
+      {/* Public URL + QR for sent proposals */}
       {isSentOrExpired && (
         <div className="mt-4 rounded-lg bg-blue-500/10 px-4 py-3">
-          <p className="text-xs text-blue-400">Public URL</p>
-          <div className="mt-1 flex items-center gap-2">
-            <code className="flex-1 truncate text-sm text-blue-200">{publicUrl}</code>
-            <button
-              onClick={handleCopyLink}
-              className="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
-            >
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
+          <div className="flex items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-blue-400">Public URL</p>
+              <div className="mt-1 flex items-center gap-2">
+                <code className="flex-1 truncate text-sm text-blue-200">{publicUrl}</code>
+                <button
+                  onClick={handleCopyLink}
+                  className="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+            {qrDataUrl && (
+              <div className="shrink-0">
+                <img src={qrDataUrl} alt="QR Code" className="h-20 w-20 rounded-md" />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -265,6 +297,11 @@ export default function ProposalDetailPage() {
             {new Date(proposal.expiresAt) < new Date() && proposal.status === 'enviado' && (
               <span className="ml-2 text-red-400">(Expired)</span>
             )}
+          </p>
+        )}
+        {proposal.viewedAt && (
+          <p className="mt-1">
+            Viewed by client: {formatDateTime(proposal.viewedAt)}
           </p>
         )}
       </div>

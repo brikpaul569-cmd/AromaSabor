@@ -76,6 +76,9 @@ export class Proposal {
   @Prop({ required: true })
   expiresAt!: Date;
 
+  @Prop()
+  viewedAt?: Date;
+
   @Prop({ enum: ['chef', 'cliente'] })
   lastModifiedBy?: string;
 

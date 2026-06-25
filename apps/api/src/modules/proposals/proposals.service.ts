@@ -29,6 +29,7 @@ export class ProposalsService {
       notes: dto.notes ?? '',
       status: 'borrador',
       quotation: quotation.total,
+      expiresAt: new Date(0),
       createdBy: new Types.ObjectId(userId),
     });
     const saved = await proposal.save();
@@ -43,6 +44,13 @@ export class ProposalsService {
   async findByToken(token: string) {
     const proposal = await this.proposalModel.findOne({ token }).populate('menuId');
     if (!proposal) throw new NotFoundException('Proposal not found');
+    if (proposal.status === 'enviado' && proposal.expiresAt < new Date()) {
+      proposal.status = 'expirado';
+    }
+    if (!proposal.viewedAt) {
+      proposal.viewedAt = new Date();
+    }
+    await proposal.save();
     return proposal;
   }
 
