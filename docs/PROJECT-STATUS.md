@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-25
-> **Phase:** Sprint 3 — Plate Builder pt 2 (Stories 9–11) 🔄
+> **Phase:** Sprint 3 — Plate Builder pt 2 (Stories 9 ✅, 10 ✅, 11 🔄)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -53,7 +53,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 7 | Select items | Plate Builder | S2 |
 | 8 | Visual plate | Plate Builder | S2 |
 | 9 | Replace and remove | Plate Builder | S3 |
-| 10 | Quantity adjustment | Plate Builder | S3 |
+| 10 | Quantity adjustment | Plate Builder | S3 | ✅
 | 11 | Live pricing | Plate Builder | S3 |
 | 12 | Create proposal | Proposals | S4 |
 | 13 | Send proposal | Proposals | S4 |
@@ -284,7 +284,7 @@ Sprint 1 (Stories 1–5).
 ### Not yet implemented (Sprint 3)
 
 - Replace/remove items (Story 9) ✅
-- Quantity / number of people adjustment (Story 10)
+- Quantity / number of people adjustment (Story 10) ✅
 - Live pricing with IVA breakdown (Story 11)
 
 ---
@@ -316,7 +316,32 @@ Sprint 1 (Stories 1–5).
 
 ---
 
-## 13. Sprint 1 Complete 🎉
+## 14. Sprint 3 — Story 10 (Quantity Adjustment) ✅
+
+### What was built
+
+- **GuestCountInput**: Numeric input with +/− buttons (min 1, clamp invalid values to 1) in the public menu page.
+- **Zustand store extension**: `guestCount` state and `setGuestCount` action added to `plate-store.ts`. Validation: min 1, floors decimals, sanitizes NaN/empty to 1.
+- **Pricing Summary**: Live calculation using `calculateQuotation` from `@aromasabor/utils`. Shows per-plate cost, guest count multiplier, subtotal, IVA (16%), and total. Updates reactively when selections or guest count change.
+
+### Files modified
+
+| File | Change |
+|------|--------|
+| `apps/web/stores/plate-store.ts` | Added `guestCount: number` (default 1), `setGuestCount()` with validation |
+| `apps/web/app/(public)/menu/[slug]/page.tsx` | Added GuestCountInput UI, pricing summary section, `calculateQuotation` import |
+
+### Verification
+
+- `pnpm typecheck` — ✅ 4/4 packages pass
+- `pnpm build` — ✅ API + Web build successful
+- `/menu/[slug]` page size: 3.37 kB → 4.05 kB (GuestCountInput + pricing summary)
+- No backend changes needed
+- Store API extended backward-compatibly (additive change)
+
+---
+
+## 15. Sprint 1 Complete 🎉
 
 Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
@@ -328,7 +353,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 14. Risks (Final Assessment)
+## 16. Risks (Final Assessment)
 
 | # | Risk | Mitigation |
 |---|------|------------|
@@ -341,7 +366,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 15. What Success Looks Like (MVP)
+## 17. What Success Looks Like (MVP)
 
 - Chef can log in, create menus, add items
 - Client opens a link, sees a visual plate builder, builds a plate

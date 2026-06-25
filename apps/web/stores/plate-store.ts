@@ -13,9 +13,11 @@ interface PlateItem {
 
 interface PlateStore {
   selections: Record<Category, PlateItem | null>;
+  guestCount: number;
   selectItem: (item: PlateItem) => void;
   deselectItem: (category: Category) => void;
   clearAll: () => void;
+  setGuestCount: (count: number) => void;
   selectedItems: () => PlateItem[];
   isSelected: (item: PlateItem) => boolean;
 }
@@ -27,6 +29,7 @@ export const usePlateStore = create<PlateStore>((set, get) => ({
     guarnicion: null,
     postre: null,
   },
+  guestCount: 1,
 
   selectItem: (item) =>
     set((state) => ({
@@ -47,6 +50,11 @@ export const usePlateStore = create<PlateStore>((set, get) => ({
         postre: null,
       },
     }),
+
+  setGuestCount: (count) => {
+    const sanitized = isNaN(count) || count < 1 ? 1 : Math.floor(count);
+    set({ guestCount: sanitized });
+  },
 
   selectedItems: () => {
     const { selections } = get();

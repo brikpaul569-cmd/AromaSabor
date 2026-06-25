@@ -7,6 +7,7 @@ import { usePlateStore } from '@/stores/plate-store';
 import PlateView from '@/components/PlateView';
 import PlateItemPopover from '@/components/PlateItemPopover';
 import ReplaceSelector from '@/components/ReplaceSelector';
+import { calculateQuotation } from '@aromasabor/utils';
 
 type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
 
@@ -51,9 +52,11 @@ export default function PublicMenuPage() {
   const [replaceCategory, setReplaceCategory] = useState<Category | null>(null);
 
   const selections = usePlateStore((s) => s.selections);
+  const guestCount = usePlateStore((s) => s.guestCount);
   const selectItem = usePlateStore((s) => s.selectItem);
   const deselectItem = usePlateStore((s) => s.deselectItem);
   const clearAll = usePlateStore((s) => s.clearAll);
+  const setGuestCount = usePlateStore((s) => s.setGuestCount);
   const selectedItems = usePlateStore((s) => s.selectedItems());
   const isSelected = usePlateStore((s) => s.isSelected);
 
@@ -128,10 +131,72 @@ export default function PublicMenuPage() {
           <div className="relative flex flex-col items-center justify-center">
             <h2 className="mb-6 text-lg font-semibold text-white/80">Your Plate</h2>
             <PlateView items={sel} onItemTap={handleItemTap} />
+
+            {/* Guest count */}
+            <div className="mt-6 w-full max-w-xs">
+              <label className="mb-2 block text-sm text-gray-400">Number of people</label>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setGuestCount(guestCount - 1)}
+                  disabled={guestCount <= 1}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-lg transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  value={guestCount}
+                  onChange={(e) => setGuestCount(Number(e.target.value))}
+                  className="h-10 w-20 rounded-lg bg-white/10 px-3 text-center text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <button
+                  onClick={() => setGuestCount(guestCount + 1)}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-lg transition hover:bg-white/20"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Pricing summary */}
+            <div className="mt-6 w-full max-w-xs rounded-lg bg-white/5 px-4 py-3 text-sm">
+              <div className="flex justify-between text-gray-400">
+                <span>Per plate</span>
+                <span>{formatPrice(sel.reduce((sum, i) => sum + i.price, 0))}</span>
+              </div>
+              <div className="flex justify-between text-gray-400">
+                <span>People</span>
+                <span>× {guestCount}</span>
+              </div>
+              <hr className="my-2 border-white/10" />
+              {(() => {
+                const q = calculateQuotation(
+                  sel.map((i) => ({ price: i.price, quantity: guestCount }))
+                );
+                return (
+                  <>
+                    <div className="flex justify-between text-gray-300">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(q.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-400">
+                      <span>IVA (16%)</span>
+                      <span>{formatPrice(q.tax)}</span>
+                    </div>
+                    <div className="mt-1 flex justify-between font-semibold text-white">
+                      <span>Total</span>
+                      <span>{formatPrice(q.total)}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
             {sel.length > 0 && (
               <button
                 onClick={clearAll}
-                className="mt-6 text-sm text-gray-500 hover:text-white"
+                className="mt-4 text-sm text-gray-500 hover:text-white"
               >
                 Clear plate
               </button>

@@ -2,7 +2,7 @@
 
 > **Purpose:** Persistent project memory for AI-assisted development
 > **Binary:** `C:\Users\brik3\Documents\Desarrollos\engram-bin\engram_1.17.0_windows_amd64`
-> **Last save:** Observation #6 — Sprint 3 (Story 9) + pricing engine fix
+> **Last save:** Observation #7 — Sprint 3 (Story 10) — Quantity Adjustment
 
 ---
 
@@ -107,7 +107,7 @@ A web platform where chefs create digital menus, send time-limited proposals to 
 ```
 Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
 Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder: view + select + visual) ✅
-Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder: replace + qty + pricing) 🔄
+Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder: replace ✅ + qty ✅ + pricing 🔄)
 Sprint 4 (1 week)  → Stories 12-13 (Proposal: create + send)
 Sprint 5 (1 week)  → Stories 14-16 (Proposal: access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Negotiation: edits)
@@ -244,6 +244,33 @@ pnpm typecheck        # TypeScript check all packages
 - `pnpm build` — ✅ API + Web
 
 ### Next
-- Story 10 — Quantity Adjustment (guest count input)
+- Story 11 — Live Pricing (IVA breakdown)
+```
+
+---
+
+## 11. Session Record — 2026-06-25 (Sprint 3, Story 10)
+
+### What was done
+
+1. **Zustand store extension**: Added `guestCount: number` (default 1) and `setGuestCount(count)` with validation (min 1, floors decimals, sanitizes NaN/empty) to `apps/web/stores/plate-store.ts`. Backward-compatible additive change.
+
+2. **GuestCountInput UI**: Built directly in `page.tsx` — numeric input with +/− buttons, dark-theme styling matching existing components. − button disabled at min 1.
+
+3. **Pricing Summary**: Live pricing section below the plate visual using `calculateQuotation()` from `@aromasabor/utils`. Shows per-plate cost, guest multiplier, subtotal, IVA (16%), and total. Updates reactively.
+
+### Files modified
+- `apps/web/stores/plate-store.ts` — guestCount + setGuestCount
+- `apps/web/app/(public)/menu/[slug]/page.tsx` — GuestCountInput + pricing summary
+- `docs/PROJECT-STATUS.md` — updated sprint status + Story 10 section
+- `docs/STORY-10-REPORT.md` — created
+- `docs/ENGRAM-MEMORY.md` — this record
+
+### Verification
+- `pnpm typecheck` — ✅ all 4 packages
+- `pnpm build` — ✅ API + Web
+- Page size: 3.37 kB → 4.05 kB
+
+### Next
 - Story 11 — Live Pricing (IVA breakdown)
 ```
