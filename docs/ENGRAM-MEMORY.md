@@ -2,7 +2,7 @@
 
 > **Purpose:** Persistent project memory for AI-assisted development
 > **Binary:** `C:\Users\brik3\Documents\Desarrollos\engram-bin\engram_1.17.0_windows_amd64`
-> **Last save:** Observation #9 — Sprint 4 (Story 12) — Create Proposal
+> **Last save:** Observation #10 — Sprint 4 (Story 13) — Send Proposal
 
 ---
 
@@ -350,6 +350,8 @@ pnpm typecheck        # TypeScript check all packages
 - `pnpm build` — ✅ API + Web
 - New routes: `/proposals`, `/proposals/new`, `/proposals/[id]`
 
-### Next
-- Story 13 — Send Proposal (expiration, status transition, public URL)
+### Sprint 4 complete
+- Story 12 — Create Proposal ✅
+- Story 13 — Send Proposal ✅
 ```
+

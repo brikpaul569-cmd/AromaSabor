@@ -15,6 +15,12 @@ export class ProposalsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Patch(':id/send')
+  send(@Param('id') id: string) {
+    return this.proposalsService.send(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('id/:id')
   findById(@Param('id') id: string) {
     return this.proposalsService.findById(id);

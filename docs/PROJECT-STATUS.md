@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-25
-> **Phase:** Sprint 4 — Proposals (Story 12 ✅, Story 13 🔄)
+> **Phase:** Sprint 4 — Proposals (Story 12 ✅, Story 13 ✅)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -56,7 +56,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 10 | Quantity adjustment | Plate Builder | S3 | ✅
 | 11 | Live pricing | Plate Builder | S3 |
 | 12 | Create proposal | Proposals | S4 | ✅
-| 13 | Send proposal | Proposals | S4 |
+| 13 | Send proposal | Proposals | S4 | ✅
 | 14 | Client access | Proposals | S5 |
 | 15 | Expiration | Proposals | S5 |
 | 16 | QR code | Proposals | S5 |
@@ -90,7 +90,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
 Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual) ✅
 Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) ✅
-Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) 🔄 (12✅ 13⏳)
+Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing)
 Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications)
@@ -413,7 +413,37 @@ All three Sprint 3 stories (9–11) are implemented.
 
 ---
 
-## 17. Sprint 1 Complete 🎉
+## 17. Sprint 4 — Story 13 (Send Proposal) ✅
+
+### What was built
+
+**Backend:**
+- `ProposalsService.send(id)`: validates `status === 'borrador'` (409 otherwise), sets `enviado` + `expiresAt = now + 20 min`, creates notification
+- `ProposalsController`: `PATCH /:id/send` (JWT-guarded)
+
+**Frontend:**
+- `/proposals/[id]`: Send button (only `borrador`), confirmation dialog with 20-min warning, public URL display + copy-to-clipboard, read-only styling after send, error handling with retry
+
+### Boundary cases
+
+| Case | Behavior |
+|------|----------|
+| Already `enviado` | Button hidden, URL shown |
+| `expirado` | Badge + URL + expired note |
+| Terminal status | Badge only, items dimmed |
+| Network failure | Error shown, retry allowed |
+
+### Files modified
+
+| File | Change |
+|------|--------|
+| `apps/api/src/modules/proposals/proposals.service.ts` | Added `send()` method |
+| `apps/api/src/modules/proposals/proposals.controller.ts` | Added `PATCH /:id/send` |
+| `apps/web/app/(admin)/proposals/[id]/page.tsx` | Send flow + confirmation + copy + read-only |
+
+---
+
+## 18. Sprint 1 Complete 🎉
 
 Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 

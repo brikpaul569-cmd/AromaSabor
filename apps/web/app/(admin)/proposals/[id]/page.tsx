@@ -53,6 +53,16 @@ const STATUS_LABELS: Record<string, string> = {
   expirado: 'Expired',
 };
 
+const STATUS_STYLES: Record<string, string> = {
+  borrador: 'bg-gray-500/20 text-gray-300',
+  enviado: 'bg-blue-500/20 text-blue-300',
+  modificado_por_cliente: 'bg-yellow-500/20 text-yellow-300',
+  modificado_por_chef: 'bg-purple-500/20 text-purple-300',
+  aceptado: 'bg-green-500/20 text-green-300',
+  rechazado: 'bg-red-500/20 text-red-300',
+  expirado: 'bg-red-500/20 text-red-300',
+};
+
 function formatPrice(price: number): string {
   return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
@@ -73,6 +83,10 @@ export default function ProposalDetailPage() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     api.get<Proposal>(`/proposals/id/${id}`)
@@ -80,6 +94,46 @@ export default function ProposalDetailPage() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const loadProposal = () => {
+    api.get<Proposal>(`/proposals/id/${id}`)
+      .then(setProposal)
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  };
+
+  const handleSend = async () => {
+    setSending(true);
+    setSendError(null);
+    try {
+      const updated = await api.patch<Proposal>(`/proposals/${id}/send`);
+      setProposal(updated);
+      setShowConfirm(false);
+    } catch (err: any) {
+      setSendError(err.message || 'Failed to send proposal');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/prop/${proposal?.token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   if (loading) {
     return (
@@ -103,6 +157,11 @@ export default function ProposalDetailPage() {
     );
   }
 
+  const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/prop/${proposal.token}`;
+  const canSend = proposal.status === 'borrador';
+  const isSentOrExpired = ['enviado', 'expirado'].includes(proposal.status);
+  const isTerminal = ['aceptado', 'rechazado'].includes(proposal.status);
+
   return (
     <div className="mx-auto max-w-3xl p-8">
       {/* Header */}
@@ -113,12 +172,44 @@ export default function ProposalDetailPage() {
             {formatDate(proposal.eventDate)} · Created by {proposal.createdBy?.name || 'Chef'}
           </p>
         </div>
-        <span className={`rounded-full px-4 py-1.5 text-sm font-medium ${
-          proposal.status === 'borrador' ? 'bg-gray-500/20 text-gray-300' : 'bg-blue-500/20 text-blue-300'
-        }`}>
-          {STATUS_LABELS[proposal.status] || proposal.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className={`rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
+            {STATUS_LABELS[proposal.status] || proposal.status}
+          </span>
+          {canSend && (
+            <button
+              onClick={() => setShowConfirm(true)}
+              className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Send to Client
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Send error */}
+      {sendError && (
+        <div className="mt-4 rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {sendError}
+          <button onClick={() => setSendError(null)} className="ml-3 underline">Dismiss</button>
+        </div>
+      )}
+
+      {/* Public URL for sent proposals */}
+      {isSentOrExpired && (
+        <div className="mt-4 rounded-lg bg-blue-500/10 px-4 py-3">
+          <p className="text-xs text-blue-400">Public URL</p>
+          <div className="mt-1 flex items-center gap-2">
+            <code className="flex-1 truncate text-sm text-blue-200">{publicUrl}</code>
+            <button
+              onClick={handleCopyLink}
+              className="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+            >
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Info cards */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -147,7 +238,7 @@ export default function ProposalDetailPage() {
       {proposal.items.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-4 text-lg font-semibold text-white/80">Items</h2>
-          <div className="flex flex-wrap gap-8">
+          <div className={`flex flex-wrap gap-8 ${isSentOrExpired || isTerminal ? 'opacity-70' : ''}`}>
             <div className="flex-1 min-w-[280px]">
               <PricingBreakdown items={proposal.items} guestCount={proposal.guestCount} />
             </div>
@@ -166,9 +257,45 @@ export default function ProposalDetailPage() {
       {/* Metadata */}
       <div className="mt-8 rounded-lg bg-white/5 px-4 py-3 text-xs text-gray-500">
         <p>ID: {proposal._id}</p>
-        <p className="mt-1">Token: {proposal.token}</p>
+        {isSentOrExpired && <p className="mt-1">Token: {proposal.token}</p>}
         <p className="mt-1">Created: {formatDate(proposal.createdAt)}</p>
+        {proposal.expiresAt && (
+          <p className="mt-1">
+            Expires: {formatDate(proposal.expiresAt)}
+            {new Date(proposal.expiresAt) < new Date() && proposal.status === 'enviado' && (
+              <span className="ml-2 text-red-400">(Expired)</span>
+            )}
+          </p>
+        )}
       </div>
+
+      {/* Confirmation dialog */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-lg bg-gray-900 p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-white">Send to Client?</h3>
+            <p className="mt-2 text-sm text-gray-400">
+              This will set a 20-minute expiration timer. The client will receive a unique URL to view the proposal.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => { setShowConfirm(false); setSendError(null); }}
+                className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-white"
+                disabled={sending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={sending}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {sending ? 'Sending...' : 'Send'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

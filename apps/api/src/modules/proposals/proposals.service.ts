@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Proposal } from '../../schemas/proposal.schema';
@@ -48,6 +48,24 @@ export class ProposalsService {
 
   async findAll() {
     return this.proposalModel.find().sort({ createdAt: -1 }).populate('createdBy', 'name email');
+  }
+
+  async send(id: string) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
+    const proposal = await this.proposalModel.findById(id);
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    if (proposal.status !== 'borrador') {
+      throw new ConflictException(`Cannot send proposal with status "${proposal.status}". Only "borrador" proposals can be sent.`);
+    }
+    proposal.status = 'enviado';
+    proposal.expiresAt = new Date(Date.now() + 20 * 60 * 1000);
+    const saved = await proposal.save();
+    await this.notificationsService.create({
+      proposalId: saved._id,
+      type: 'proposal_updated',
+      message: `Proposal for ${saved.clientName} has been sent to client`,
+    });
+    return saved;
   }
 
   async findById(id: string) {
