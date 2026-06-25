@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
-> **Date:** 2026-06-24
-> **Phase:** Sprint 2 — Plate Builder (Stories 6–8) ✅
+> **Date:** 2026-06-25
+> **Phase:** Sprint 3 — Plate Builder pt 2 (Stories 9–11) 🔄
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -277,11 +277,42 @@ Sprint 1 (Stories 1–5).
 - `apps/web/tailwind.config.js` — added `fadeIn` keyframe animation
 - `apps/api/src/modules/menus/menus.service.ts` — added weight to updateItem signature
 
+### Pricing engine alignment
+
+- **`packages/utils/src/pricing.ts`**: Fixed double-rounding inconsistency. `total` was `roundHalfUp(subtotal + tax)`, violating invariant #4 ("Total = subtotal + tax (exact sum)"). Now each line total is rounded first, subtotal sums rounded line totals, tax is half-up rounded, and total = subtotal + tax (exact sum). Aligned with DOMAIN-MODEL.md invariants.
+
 ### Not yet implemented (Sprint 3)
 
-- Replace/remove items (Story 9)
+- Replace/remove items (Story 9) ✅
 - Quantity / number of people adjustment (Story 10)
 - Live pricing with IVA breakdown (Story 11)
+
+---
+
+## 13. Sprint 3 — Story 9 (Replace and Remove) ✅
+
+### What was built
+
+- **PlateItemPopover**: Tap any layer in the plate visual → popover with Remove / Replace options.
+- **Remove**: Calls `deselectItem()` — item disappears, category becomes empty.
+- **Replace**: Opens `ReplaceSelector` modal showing other items in same category. Selecting one calls `selectItem()`.
+- **Boundary cases**: Replace disabled when category has ≤1 item; closing selector without selecting returns to popover; click outside closes popover.
+
+### Files created
+
+- `apps/web/components/PlateView.tsx` — extracted from inline page code, now reusable (`onItemTap` callback)
+- `apps/web/components/PlateItemPopover.tsx` — Remove/Replace popover
+- `apps/web/components/ReplaceSelector.tsx` — item list for replacement
+
+### Files modified
+
+- `apps/web/app/(public)/menu/[slug]/page.tsx` — uses extracted components + Story 9 state/logic
+- `apps/web/package.json` — added `@aromasabor/utils` dependency
+- `packages/utils/src/pricing.ts` — fixed total calculation (double rounding)
+
+### Deuda corregida
+
+- locale `es-MX` → `es-CO` en `formatPrice()`
 
 ---
 

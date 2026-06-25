@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { usePlateStore } from '@/stores/plate-store';
+import PlateView from '@/components/PlateView';
+import PlateItemPopover from '@/components/PlateItemPopover';
+import ReplaceSelector from '@/components/ReplaceSelector';
 
 type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
 
@@ -31,50 +34,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 ];
 
 function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-MX', { minimumFractionDigits: 2 });
-}
-
-function PlateView({ items }: { items: MenuItem[] }) {
-  if (items.length === 0) {
-    return (
-      <div className="flex h-64 items-center justify-center rounded-full border-2 border-dashed border-white/20">
-        <p className="text-sm text-gray-500">Select items to build your plate</p>
-      </div>
-    );
-  }
-
-  const layers = [
-    { key: 'postre', label: 'Postre', color: 'bg-amber-800/60' },
-    { key: 'guarnicion', label: 'Guarnición', color: 'bg-yellow-700/50' },
-    { key: 'plato_fuerte', label: 'Plato Fuerte', color: 'bg-red-800/50' },
-    { key: 'entrada', label: 'Entrada', color: 'bg-green-800/50' },
-  ];
-
-  return (
-    <div className="relative mx-auto flex h-72 w-72 items-center justify-center">
-      <div className="absolute inset-0 rounded-full border-2 border-white/10" />
-      {layers.map((layer, i) => {
-        const item = items.find((it) => it.category === layer.key);
-        if (!item) return null;
-        return (
-          <div
-            key={item._id}
-            className={`absolute inset-4 rounded-full ${layer.color} flex animate-fadeIn flex-col items-center justify-center backdrop-blur-sm`}
-            style={{
-              animationDelay: `${i * 150}ms`,
-              zIndex: i,
-              margin: `${i * 8}px`,
-            }}
-          >
-            <p className="text-sm font-medium text-white drop-shadow-lg">{item.name}</p>
-            {item.weight && (
-              <p className="text-xs text-white/70 drop-shadow">{item.weight}g</p>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 export default function PublicMenuPage() {
@@ -86,6 +46,10 @@ export default function PublicMenuPage() {
   const [notFound, setNotFound] = useState(false);
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
 
+  // Story 9 state
+  const [activePlateItem, setActivePlateItem] = useState<MenuItem | null>(null);
+  const [replaceCategory, setReplaceCategory] = useState<Category | null>(null);
+
   const selections = usePlateStore((s) => s.selections);
   const selectItem = usePlateStore((s) => s.selectItem);
   const deselectItem = usePlateStore((s) => s.deselectItem);
@@ -93,12 +57,44 @@ export default function PublicMenuPage() {
   const selectedItems = usePlateStore((s) => s.selectedItems());
   const isSelected = usePlateStore((s) => s.isSelected);
 
+  const sel = selectedItems;
+
   useEffect(() => {
     api.get<Menu>('/menus/slug/' + slug)
       .then(setMenu)
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  const handleItemTap = useCallback((item: MenuItem) => {
+    setActivePlateItem(item);
+  }, []);
+
+  const handleRemove = useCallback(() => {
+    if (!activePlateItem) return;
+    deselectItem(activePlateItem.category);
+    setActivePlateItem(null);
+  }, [activePlateItem, deselectItem]);
+
+  const handleReplaceOpen = useCallback(() => {
+    if (!activePlateItem) return;
+    setReplaceCategory(activePlateItem.category);
+  }, [activePlateItem]);
+
+  const handleReplaceSelect = useCallback((item: MenuItem) => {
+    selectItem(item);
+    setReplaceCategory(null);
+    setActivePlateItem(null);
+  }, [selectItem]);
+
+  const grouped = CATEGORIES.map((cat) => ({
+    ...cat,
+    items: menu?.items.filter((i) => i.category === cat.value) ?? [],
+  }));
+
+  const replaceGroup = replaceCategory
+    ? grouped.find((g) => g.value === replaceCategory)
+    : null;
 
   if (loading) {
     return (
@@ -117,13 +113,6 @@ export default function PublicMenuPage() {
     );
   }
 
-  const grouped = CATEGORIES.map((cat) => ({
-    ...cat,
-    items: menu.items.filter((i) => i.category === cat.value),
-  }));
-
-  const sel = selectedItems;
-
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="mx-auto max-w-5xl px-4 py-12">
@@ -136,9 +125,9 @@ export default function PublicMenuPage() {
         {/* Plate visual + selection */}
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
           {/* Plate view */}
-          <div className="flex flex-col items-center justify-center">
+          <div className="relative flex flex-col items-center justify-center">
             <h2 className="mb-6 text-lg font-semibold text-white/80">Your Plate</h2>
-            <PlateView items={sel} />
+            <PlateView items={sel} onItemTap={handleItemTap} />
             {sel.length > 0 && (
               <button
                 onClick={clearAll}
@@ -146,6 +135,16 @@ export default function PublicMenuPage() {
               >
                 Clear plate
               </button>
+            )}
+
+            {activePlateItem && !replaceCategory && (
+              <PlateItemPopover
+                item={activePlateItem}
+                canReplace={(grouped.find((g) => g.value === activePlateItem.category)?.items.length ?? 0) > 1}
+                onRemove={handleRemove}
+                onReplace={handleReplaceOpen}
+                onClose={() => setActivePlateItem(null)}
+              />
             )}
           </div>
 
@@ -221,6 +220,17 @@ export default function PublicMenuPage() {
           </div>
         </div>
       </div>
+
+      {/* Replace selector modal */}
+      {replaceGroup && activePlateItem && (
+        <ReplaceSelector
+          categoryLabel={replaceGroup.label}
+          items={replaceGroup.items}
+          currentItemId={activePlateItem._id}
+          onSelect={handleReplaceSelect}
+          onClose={() => setReplaceCategory(null)}
+        />
+      )}
     </div>
   );
 }

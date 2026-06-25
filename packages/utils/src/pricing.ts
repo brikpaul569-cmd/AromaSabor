@@ -38,9 +38,9 @@ export function calculateQuotation(items: QuotationItem[]): QuotationResult {
     if (item.quantity < 1) throw new Error('Quantity must be at least 1');
   }
 
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = items.reduce((acc, item) => acc + roundHalfUp(item.price * item.quantity), 0);
   const tax = roundHalfUp(subtotal * TAX_RATE);
-  const total = roundHalfUp(subtotal + tax);
+  const total = subtotal + tax;
 
   return { subtotal, tax, total };
 }

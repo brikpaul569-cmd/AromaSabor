@@ -2,7 +2,7 @@
 
 > **Purpose:** Persistent project memory for AI-assisted development
 > **Binary:** `C:\Users\brik3\Documents\Desarrollos\engram-bin\engram_1.17.0_windows_amd64`
-> **Last save:** Observation #5
+> **Last save:** Observation #6 — Sprint 3 (Story 9) + pricing engine fix
 
 ---
 
@@ -105,9 +105,9 @@ A web platform where chefs create digital menus, send time-limited proposals to 
 ## 5. Sprint Plan
 
 ```
-Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus)
-Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder: view + select + visual)
-Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder: replace + qty + pricing)
+Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
+Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder: view + select + visual) ✅
+Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder: replace + qty + pricing) 🔄
 Sprint 4 (1 week)  → Stories 12-13 (Proposal: create + send)
 Sprint 5 (1 week)  → Stories 14-16 (Proposal: access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Negotiation: edits)
@@ -207,4 +207,43 @@ engram tui
 pnpm dev              # Start API + Web concurrently
 pnpm lint             # Lint all packages
 pnpm typecheck        # TypeScript check all packages
+```
+
+---
+
+## 10. Session Record — 2026-06-25 (Sprint 3, Story 9)
+
+### What was done
+
+1. **Pricing engine fix**: `packages/utils/src/pricing.ts` — corrected `total` calculation from `roundHalfUp(subtotal + tax)` to `subtotal + tax` with individual line total rounding. Aligned with DOMAIN-MODEL.md invariant #4.
+
+2. **`@aromasabor/utils` linked to web**: Added `"@aromasabor/utils": "workspace:*"` to `apps/web/package.json`. `pnpm install` creates a workspace symlink. `pnpm typecheck` and `pnpm build` pass.
+
+3. **Story 9 — Replace and Remove**:
+   - Extracted `PlateView` from inline code to `apps/web/components/PlateView.tsx` with `onItemTap` prop
+   - Created `apps/web/components/PlateItemPopover.tsx` — popover with Remove/Replace buttons
+   - Created `apps/web/components/ReplaceSelector.tsx` — modal showing replacement items
+   - Updated `apps/web/app/(public)/menu/[slug]/page.tsx` to use components + Story 9 state flow
+   - Fixed locale `es-MX` → `es-CO` in `formatPrice`
+
+### Files created
+- `apps/web/components/PlateView.tsx`
+- `apps/web/components/PlateItemPopover.tsx`
+- `apps/web/components/ReplaceSelector.tsx`
+
+### Files modified
+- `packages/utils/src/pricing.ts`
+- `apps/web/package.json`
+- `apps/web/app/(public)/menu/[slug]/page.tsx`
+- `docs/PROJECT-STATUS.md`
+- `docs/STORY-9-REPORT.md`
+- `docs/ENGRAM-MEMORY.md`
+
+### Verification
+- `pnpm typecheck` — ✅ all 4 packages
+- `pnpm build` — ✅ API + Web
+
+### Next
+- Story 10 — Quantity Adjustment (guest count input)
+- Story 11 — Live Pricing (IVA breakdown)
 ```

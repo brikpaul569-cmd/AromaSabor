@@ -105,6 +105,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@aromasabor/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@tanstack/react-query':
         specifier: ^5.0.0
         version: 5.101.1(react@19.2.7)
