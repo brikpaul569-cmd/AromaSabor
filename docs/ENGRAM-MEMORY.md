@@ -2,7 +2,7 @@
 
 > **Purpose:** Persistent project memory for AI-assisted development
 > **Binary:** `C:\Users\brik3\Documents\Desarrollos\engram-bin\engram_1.17.0_windows_amd64`
-> **Last save:** Observation #7 — Sprint 3 (Story 10) — Quantity Adjustment
+> **Last save:** Observation #8 — Sprint 3 (Story 11) — Live Pricing / Sprint 3 complete
 
 ---
 
@@ -107,7 +107,7 @@ A web platform where chefs create digital menus, send time-limited proposals to 
 ```
 Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
 Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder: view + select + visual) ✅
-Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder: replace ✅ + qty ✅ + pricing 🔄)
+Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder: replace ✅ + qty ✅ + pricing ✅)
 Sprint 4 (1 week)  → Stories 12-13 (Proposal: create + send)
 Sprint 5 (1 week)  → Stories 14-16 (Proposal: access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Negotiation: edits)
@@ -244,7 +244,7 @@ pnpm typecheck        # TypeScript check all packages
 - `pnpm build` — ✅ API + Web
 
 ### Next
-- Story 11 — Live Pricing (IVA breakdown)
+- Story 11 — Live Pricing (IVA breakdown) ✅ completed below
 ```
 
 ---
@@ -272,5 +272,38 @@ pnpm typecheck        # TypeScript check all packages
 - Page size: 3.37 kB → 4.05 kB
 
 ### Next
-- Story 11 — Live Pricing (IVA breakdown)
+- Sprint 4 — Stories 12-13 (Proposals)
+```
+
+---
+
+## 12. Session Record — 2026-06-25 (Sprint 3, Story 11)
+
+### What was done
+
+1. **PricingBreakdown component**: Created `apps/web/components/PricingBreakdown.tsx` — reusable component with props `items` and `guestCount`. Internally calculates per-category breakdown, price per plate, subtotal, IVA (16%), and total via `calculateQuotation()`.
+
+2. **Category breakdown**: Each category with selected items shows its per-plate contribution. Only active categories render. Follows the fixed 4-category model (entrada, plato_fuerte, guarnicion, postre).
+
+3. **Inline pricing replaced**: The inline pricing JSX in `page.tsx` (from Story 10) was replaced with a single `<PricingBreakdown>` component, removing the `calculateQuotation` import from the page.
+
+### Files created
+- `apps/web/components/PricingBreakdown.tsx`
+
+### Files modified
+- `apps/web/app/(public)/menu/[slug]/page.tsx` — replaced inline pricing with component
+- `docs/PROJECT-STATUS.md` — Story 11 section + Sprint 3 status ✅
+- `docs/STORY-11-REPORT.md` — created
+- `docs/ENGRAM-MEMORY.md` — this record
+
+### Verification
+- `pnpm typecheck` — ✅ all 4 packages
+- `pnpm build` — ✅ API + Web
+- Page size: 4.05 kB → 4.17 kB
+- No backend, store, schema, or pricing engine changes
+
+### Sprint 3 complete
+- Story 9 — Replace and Remove ✅
+- Story 10 — Quantity Adjustment ✅
+- Story 11 — Live Pricing ✅
 ```

@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-25
-> **Phase:** Sprint 3 — Plate Builder pt 2 (Stories 9 ✅, 10 ✅, 11 🔄)
+> **Phase:** Sprint 3 — Plate Builder pt 2 (Stories 9 ✅, 10 ✅, 11 ✅)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -89,7 +89,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 ```
 Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
 Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual) ✅
-Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing)
+Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) 🔄 (9✅ 10✅ 11⏳)
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send)
 Sprint 5 (1 week)  → Stories 14-16 (Client access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing)
@@ -281,11 +281,9 @@ Sprint 1 (Stories 1–5).
 
 - **`packages/utils/src/pricing.ts`**: Fixed double-rounding inconsistency. `total` was `roundHalfUp(subtotal + tax)`, violating invariant #4 ("Total = subtotal + tax (exact sum)"). Now each line total is rounded first, subtotal sums rounded line totals, tax is half-up rounded, and total = subtotal + tax (exact sum). Aligned with DOMAIN-MODEL.md invariants.
 
-### Not yet implemented (Sprint 3)
+### Sprint 3 complete ✅
 
-- Replace/remove items (Story 9) ✅
-- Quantity / number of people adjustment (Story 10) ✅
-- Live pricing with IVA breakdown (Story 11)
+All three Sprint 3 stories (9–11) are implemented.
 
 ---
 
@@ -341,7 +339,39 @@ Sprint 1 (Stories 1–5).
 
 ---
 
-## 15. Sprint 1 Complete 🎉
+## 15. Sprint 3 — Story 11 (Live Pricing) ✅
+
+### What was built
+
+- **PricingBreakdown component** (`apps/web/components/PricingBreakdown.tsx`): Reusable pricing panel with category breakdown. Props: `items`, `guestCount`.
+- **Category breakdown**: Each category with a selected item shows its per-plate contribution (Entrada, Plato Fuerte, Guarnición, Postre). Only categories with items appear.
+- **Summary rows**: Price per plate, Number of people, Subtotal, IVA (16%), Total — all calculated via `calculateQuotation()`.
+- **Instant updates**: Reactively re-renders on selection changes, replacements, and guest count changes.
+- **Inline pricing replaced**: The inline JSX from Story 10 was replaced with a single `<PricingBreakdown>` component import.
+
+### Files created
+
+| File | Purpose |
+|------|---------|
+| `apps/web/components/PricingBreakdown.tsx` | Reusable pricing component with category-level breakdown |
+
+### Files modified
+
+| File | Change |
+|------|--------|
+| `apps/web/app/(public)/menu/[slug]/page.tsx` | Replaced inline pricing block with `<PricingBreakdown>`, removed `calculateQuotation` import |
+
+### Verification
+
+- `pnpm typecheck` — ✅ 4/4 packages pass
+- `pnpm build` — ✅ API + Web build successful
+- `/menu/[slug]` page size: 4.05 kB → 4.17 kB
+- No backend, store, pricing engine, or schema changes
+- Component reusable by `/prop/[token]` in Sprint 5
+
+---
+
+## 16. Sprint 1 Complete 🎉
 
 Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
@@ -353,7 +383,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 16. Risks (Final Assessment)
+## 17. Risks (Final Assessment)
 
 | # | Risk | Mitigation |
 |---|------|------------|
@@ -366,7 +396,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 17. What Success Looks Like (MVP)
+## 18. What Success Looks Like (MVP)
 
 - Chef can log in, create menus, add items
 - Client opens a link, sees a visual plate builder, builds a plate

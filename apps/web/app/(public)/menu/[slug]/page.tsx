@@ -7,7 +7,7 @@ import { usePlateStore } from '@/stores/plate-store';
 import PlateView from '@/components/PlateView';
 import PlateItemPopover from '@/components/PlateItemPopover';
 import ReplaceSelector from '@/components/ReplaceSelector';
-import { calculateQuotation } from '@aromasabor/utils';
+import PricingBreakdown from '@/components/PricingBreakdown';
 
 type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
 
@@ -160,37 +160,8 @@ export default function PublicMenuPage() {
             </div>
 
             {/* Pricing summary */}
-            <div className="mt-6 w-full max-w-xs rounded-lg bg-white/5 px-4 py-3 text-sm">
-              <div className="flex justify-between text-gray-400">
-                <span>Per plate</span>
-                <span>{formatPrice(sel.reduce((sum, i) => sum + i.price, 0))}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>People</span>
-                <span>× {guestCount}</span>
-              </div>
-              <hr className="my-2 border-white/10" />
-              {(() => {
-                const q = calculateQuotation(
-                  sel.map((i) => ({ price: i.price, quantity: guestCount }))
-                );
-                return (
-                  <>
-                    <div className="flex justify-between text-gray-300">
-                      <span>Subtotal</span>
-                      <span>{formatPrice(q.subtotal)}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-400">
-                      <span>IVA (16%)</span>
-                      <span>{formatPrice(q.tax)}</span>
-                    </div>
-                    <div className="mt-1 flex justify-between font-semibold text-white">
-                      <span>Total</span>
-                      <span>{formatPrice(q.total)}</span>
-                    </div>
-                  </>
-                );
-              })()}
+            <div className="mt-6">
+              <PricingBreakdown items={sel} guestCount={guestCount} />
             </div>
 
             {sel.length > 0 && (
