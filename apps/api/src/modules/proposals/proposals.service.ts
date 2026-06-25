@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Proposal } from '../../schemas/proposal.schema';
 import { NotificationsService } from '../notifications/notifications.service';
 import { v4 as uuidv4 } from 'uuid';
+import { CreateProposalDto } from './dto/create-proposal.dto';
+import { calculateQuotation } from '@aromasabor/utils';
 
 @Injectable()
 export class ProposalsService {
@@ -12,10 +14,22 @@ export class ProposalsService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async create(data: Partial<Proposal>) {
+  async create(dto: CreateProposalDto, userId: string) {
+    const quotation = calculateQuotation(
+      dto.items.map((i) => ({ price: i.price, quantity: dto.guestCount })),
+    );
+
     const proposal = new this.proposalModel({
-      ...data,
+      menuId: new Types.ObjectId(dto.menuId),
       token: uuidv4(),
+      clientName: dto.clientName,
+      eventDate: dto.eventDate,
+      guestCount: dto.guestCount,
+      items: dto.items,
+      notes: dto.notes ?? '',
+      status: 'borrador',
+      quotation: quotation.total,
+      createdBy: new Types.ObjectId(userId),
     });
     const saved = await proposal.save();
     await this.notificationsService.create({
@@ -34,6 +48,13 @@ export class ProposalsService {
 
   async findAll() {
     return this.proposalModel.find().sort({ createdAt: -1 }).populate('createdBy', 'name email');
+  }
+
+  async findById(id: string) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
+    const proposal = await this.proposalModel.findById(id).populate('createdBy', 'name email').populate('menuId', 'name');
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    return proposal;
   }
 
   async update(id: string, data: Partial<Proposal>) {

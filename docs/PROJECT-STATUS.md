@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-25
-> **Phase:** Sprint 3 — Plate Builder pt 2 (Stories 9 ✅, 10 ✅, 11 ✅)
+> **Phase:** Sprint 4 — Proposals (Story 12 ✅, Story 13 🔄)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -55,7 +55,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 9 | Replace and remove | Plate Builder | S3 |
 | 10 | Quantity adjustment | Plate Builder | S3 | ✅
 | 11 | Live pricing | Plate Builder | S3 |
-| 12 | Create proposal | Proposals | S4 |
+| 12 | Create proposal | Proposals | S4 | ✅
 | 13 | Send proposal | Proposals | S4 |
 | 14 | Client access | Proposals | S5 |
 | 15 | Expiration | Proposals | S5 |
@@ -89,8 +89,8 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 ```
 Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
 Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual) ✅
-Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) 🔄 (9✅ 10✅ 11⏳)
-Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send)
+Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) ✅
+Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) 🔄 (12✅ 13⏳)
 Sprint 5 (1 week)  → Stories 14-16 (Client access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing)
 Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications)
@@ -371,7 +371,49 @@ All three Sprint 3 stories (9–11) are implemented.
 
 ---
 
-## 16. Sprint 1 Complete 🎉
+## 16. Sprint 4 — Story 12 (Create Proposal) ✅
+
+### What was built
+
+**Backend:**
+- **DTOs**: `CreateProposalDto` and `CreateProposalItemDto` with `class-validator` validation (menuId, items, clientName, eventDate, guestCount, notes)
+- **Service**: `create()` now accepts DTO + userId, calculates `quotation` via `calculateQuotation()`, sets `createdBy` from JWT, generates UUID token, status defaults to `borrador`
+- **Controller**: `POST /api/proposals` uses DTO + `@CurrentUser()`; added `GET /api/proposals/id/:id` for admin detail
+
+**Frontend:**
+- **Proposals list** (`/proposals`): Fetches all proposals, displays cards with status badges, "New Proposal" button
+- **Create form** (`/proposals/new`): Menu selector → items grouped by category with checkboxes + per-item quantity → client/event/guest fields → live `PricingBreakdown` preview → Save as Draft
+- **Detail view** (`/proposals/[id]`): Client info, items, pricing breakdown, metadata (token, dates)
+- **Dashboard**: Stats cards (total/sent/draft), recent proposals list
+
+### Files created
+
+| File | Purpose |
+|------|---------|
+| `apps/api/src/modules/proposals/dto/create-proposal.dto.ts` | DTO with validation |
+| `apps/web/app/(admin)/proposals/new/page.tsx` | Create proposal form |
+| `apps/web/app/(admin)/proposals/[id]/page.tsx` | Proposal detail view |
+
+### Files modified
+
+| File | Change |
+|------|--------|
+| `apps/api/src/modules/proposals/proposals.service.ts` | `create()` uses DTO, `@aromasabor/utils`, `createdBy`; added `findById()` |
+| `apps/api/src/modules/proposals/proposals.controller.ts` | `POST /` uses DTO + `@CurrentUser()`; added `GET /id/:id` |
+| `apps/api/package.json` | Added `@aromasabor/utils` dependency |
+| `apps/web/app/(admin)/proposals/page.tsx` | Full proposal list with status badges |
+| `apps/web/app/(admin)/dashboard/page.tsx` | Stats cards + recent proposals |
+
+### Verification
+
+- `pnpm typecheck` — ✅ 4/4 packages pass
+- `pnpm build` — ✅ API + Web build successful
+- New routes: `/proposals` (1.48 kB), `/proposals/new` (3.13 kB), `/proposals/[id]` (2.4 kB)
+- No schema or shared types changes
+
+---
+
+## 17. Sprint 1 Complete 🎉
 
 Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
@@ -383,7 +425,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 17. Risks (Final Assessment)
+## 18. Risks (Final Assessment)
 
 | # | Risk | Mitigation |
 |---|------|------------|
@@ -396,7 +438,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 18. What Success Looks Like (MVP)
+## 19. What Success Looks Like (MVP)
 
 - Chef can log in, create menus, add items
 - Client opens a link, sees a visual plate builder, builds a plate

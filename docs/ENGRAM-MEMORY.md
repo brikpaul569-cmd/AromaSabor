@@ -2,7 +2,7 @@
 
 > **Purpose:** Persistent project memory for AI-assisted development
 > **Binary:** `C:\Users\brik3\Documents\Desarrollos\engram-bin\engram_1.17.0_windows_amd64`
-> **Last save:** Observation #8 — Sprint 3 (Story 11) — Live Pricing / Sprint 3 complete
+> **Last save:** Observation #9 — Sprint 4 (Story 12) — Create Proposal
 
 ---
 
@@ -306,4 +306,50 @@ pnpm typecheck        # TypeScript check all packages
 - Story 9 — Replace and Remove ✅
 - Story 10 — Quantity Adjustment ✅
 - Story 11 — Live Pricing ✅
+```
+
+---
+
+## 13. Session Record — 2026-06-25 (Sprint 4, Story 12)
+
+### What was done
+
+1. **Backend DTOs**: Created `CreateProposalDto` and `CreateProposalItemDto` with class-validator decorators for proposal creation validation.
+
+2. **ProposalsService refactor**: `create()` now accepts `CreateProposalDto` + `userId`, calls `calculateQuotation()` from `@aromasabor/utils`, sets `createdBy` from JWT, and defaults status to `borrador`. Added `findById()` for admin detail lookup.
+
+3. **ProposalsController update**: `POST /` uses typed DTO + `@CurrentUser()`. Added `GET /id/:id` route for admin detail.
+
+4. **API dependency added**: `@aromasabor/utils` linked to `apps/api/package.json`.
+
+5. **Frontend — proposals list**: `/proposals` page fetches all proposals, displays cards with status badges, "New Proposal" button.
+
+6. **Frontend — create form**: `/proposals/new` with menu selector, checkable items grouped by category, per-item quantity, client/event/guest fields, live PricingBreakdown preview, save with validation.
+
+7. **Frontend — detail view**: `/proposals/[id]` shows client info, items, pricing breakdown, metadata.
+
+8. **Dashboard update**: Stats cards (total/sent/draft), recent proposals list with links.
+
+### Files created
+- `apps/api/src/modules/proposals/dto/create-proposal.dto.ts`
+- `apps/web/app/(admin)/proposals/new/page.tsx`
+- `apps/web/app/(admin)/proposals/[id]/page.tsx`
+
+### Files modified
+- `apps/api/src/modules/proposals/proposals.service.ts`
+- `apps/api/src/modules/proposals/proposals.controller.ts`
+- `apps/api/package.json`
+- `apps/web/app/(admin)/proposals/page.tsx`
+- `apps/web/app/(admin)/dashboard/page.tsx`
+- `docs/PROJECT-STATUS.md`
+- `docs/STORY-12-REPORT.md`
+- `docs/ENGRAM-MEMORY.md`
+
+### Verification
+- `pnpm typecheck` — ✅ all 4 packages
+- `pnpm build` — ✅ API + Web
+- New routes: `/proposals`, `/proposals/new`, `/proposals/[id]`
+
+### Next
+- Story 13 — Send Proposal (expiration, status transition, public URL)
 ```

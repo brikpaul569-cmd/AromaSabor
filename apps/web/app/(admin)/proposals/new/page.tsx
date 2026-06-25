@@ -1,0 +1,308 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import PricingBreakdown from '@/components/PricingBreakdown';
+
+type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
+
+interface MenuItem {
+  _id: string;
+  name: string;
+  description: string;
+  category: Category;
+  price: number;
+  weight?: number;
+}
+
+interface Menu {
+  _id: string;
+  name: string;
+  description?: string;
+  items: MenuItem[];
+}
+
+interface SelectedItem {
+  _id: string;
+  name: string;
+  description: string;
+  category: Category;
+  price: number;
+  quantity: number;
+}
+
+const CATEGORY_ORDER: Category[] = ['entrada', 'plato_fuerte', 'guarnicion', 'postre'];
+const CATEGORY_LABELS: Record<Category, string> = {
+  entrada: 'Entrada',
+  plato_fuerte: 'Plato Fuerte',
+  guarnicion: 'Guarnición',
+  postre: 'Postre',
+};
+
+function formatPrice(price: number): string {
+  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
+}
+
+function toDateInputValue(date: Date): string {
+  return date.toISOString().split('T')[0] ?? '';
+}
+
+export default function NewProposalPage() {
+  const router = useRouter();
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [selectedMenuId, setSelectedMenuId] = useState('');
+  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
+  const [itemQuantities, setItemQuantities] = useState<Map<string, number>>(new Map());
+  const [clientName, setClientName] = useState('');
+  const [eventDate, setEventDate] = useState(toDateInputValue(new Date()));
+  const [guestCount, setGuestCount] = useState(1);
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get<Menu[]>('/menus').then(setMenus).catch(console.error);
+  }, []);
+
+  const currentMenu = menus.find((m) => m._id === selectedMenuId);
+
+  const groupedItems = currentMenu
+    ? CATEGORY_ORDER.map((cat) => ({
+        category: cat,
+        label: CATEGORY_LABELS[cat],
+        items: currentMenu.items.filter((i) => i.category === cat),
+      }))
+    : [];
+
+  const selectedArray = Array.from(selectedItems.values());
+
+  function toggleItem(item: MenuItem) {
+    setSelectedItems((prev) => {
+      const next = new Map(prev);
+      if (next.has(item._id)) {
+        next.delete(item._id);
+      } else {
+        next.set(item._id, { ...item, quantity: itemQuantities.get(item._id) ?? 1 });
+      }
+      return next;
+    });
+  }
+
+  function setQuantity(itemId: string, qty: number) {
+    const sanitized = isNaN(qty) || qty < 1 ? 1 : Math.floor(qty);
+    setItemQuantities((prev) => {
+      const next = new Map(prev);
+      next.set(itemId, sanitized);
+      return next;
+    });
+    setSelectedItems((prev) => {
+      const item = prev.get(itemId);
+      if (!item) return prev;
+      const next = new Map(prev);
+      next.set(itemId, { ...item, quantity: sanitized });
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    setError('');
+    if (!selectedMenuId) { setError('Select a menu.'); return; }
+    if (selectedArray.length === 0) { setError('Select at least one item.'); return; }
+    if (!clientName.trim()) { setError('Client name is required.'); return; }
+    if (!eventDate) { setError('Event date is required.'); return; }
+
+    setSaving(true);
+    try {
+      const proposal = await api.post<{ _id: string }>('/proposals', {
+        menuId: selectedMenuId,
+        items: selectedArray.map((i) => ({
+          name: i.name,
+          description: i.description,
+          category: i.category,
+          price: i.price,
+          quantity: i.quantity,
+        })),
+        clientName: clientName.trim(),
+        eventDate,
+        guestCount,
+        notes: notes.trim() || undefined,
+      });
+      router.push(`/proposals/${proposal._id}`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create proposal');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl p-8">
+      <h1 className="text-3xl font-bold">New Proposal</h1>
+
+      {/* Menu selector */}
+      <div className="mt-8">
+        <label className="mb-2 block text-sm text-gray-400">Menu</label>
+        <select
+          value={selectedMenuId}
+          onChange={(e) => {
+            setSelectedMenuId(e.target.value);
+            setSelectedItems(new Map());
+            setItemQuantities(new Map());
+          }}
+          className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
+        >
+          <option value="">Select a menu</option>
+          {menus.map((m) => (
+            <option key={m._id} value={m._id}>{m.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Items */}
+      {currentMenu && (
+        <div className="mt-8 space-y-6">
+          <h2 className="text-lg font-semibold text-white/80">Select items</h2>
+          {groupedItems.map((group) => {
+            if (group.items.length === 0) return null;
+            return (
+              <div key={group.category}>
+                <h3 className="mb-2 text-sm font-medium text-gray-400">{group.label}</h3>
+                <div className="space-y-2">
+                  {group.items.map((item) => {
+                    const isSelected = selectedItems.has(item._id);
+                    return (
+                      <label
+                        key={item._id}
+                        className={`flex items-center gap-4 rounded-lg px-4 py-3 transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-green-500/20 ring-1 ring-green-400/40'
+                            : 'bg-white/5 hover:bg-white/10'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleItem(item)}
+                          className="h-4 w-4 accent-green-500"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">{item.name}</p>
+                          {item.description && (
+                            <p className="truncate text-xs text-gray-500">{item.description}</p>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">{formatPrice(item.price)}</span>
+                        {isSelected && (
+                          <input
+                            type="number"
+                            min={1}
+                            value={itemQuantities.get(item._id) ?? 1}
+                            onChange={(e) => setQuantity(item._id, Number(e.target.value))}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-8 w-16 rounded bg-white/10 px-2 text-center text-xs text-white outline-none ring-1 ring-white/20 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Client info */}
+      <div className="mt-8 grid gap-6 sm:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm text-gray-400">Client name</label>
+          <input
+            type="text"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            placeholder="María Gómez"
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm text-gray-400">Event date</label>
+          <input
+            type="date"
+            value={eventDate}
+            onChange={(e) => setEventDate(e.target.value)}
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm text-gray-400">Number of people</label>
+          <input
+            type="number"
+            min={1}
+            value={guestCount}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setGuestCount(isNaN(v) || v < 1 ? 1 : v);
+            }}
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-sm text-gray-400">Notes</label>
+          <input
+            type="text"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Optional notes"
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
+          />
+        </div>
+      </div>
+
+      {/* Preview */}
+      {selectedArray.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold text-white/80">Preview</h2>
+          <div className="flex flex-wrap gap-8">
+            <div className="flex-1 min-w-[280px]">
+              <PricingBreakdown items={selectedArray} guestCount={guestCount} />
+            </div>
+            <div className="flex-1 min-w-[200px] space-y-3">
+              <h3 className="text-sm font-medium text-gray-400">Selected items</h3>
+              {selectedArray.map((item) => (
+                <div key={item._id} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-300">{item.name}</span>
+                  <span className="text-gray-500">× {item.quantity}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <p className="mt-4 text-sm text-red-400">{error}</p>
+      )}
+
+      {/* Save */}
+      <div className="mt-8 flex items-center gap-4">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-lg bg-white/10 px-6 py-3 font-medium text-white transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          {saving ? 'Saving...' : 'Save as Draft'}
+        </button>
+        <button
+          onClick={() => router.push('/proposals')}
+          className="text-sm text-gray-500 hover:text-white"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}

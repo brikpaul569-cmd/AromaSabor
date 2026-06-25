@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards } from '@nestjs/common';
 import { ProposalsService } from './proposals.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CreateProposalDto } from './dto/create-proposal.dto';
 
 @Controller('proposals')
 export class ProposalsController {
@@ -8,8 +10,14 @@ export class ProposalsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() body: any) {
-    return this.proposalsService.create(body);
+  create(@Body() body: CreateProposalDto, @CurrentUser() user: any) {
+    return this.proposalsService.create(body, user._id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('id/:id')
+  findById(@Param('id') id: string) {
+    return this.proposalsService.findById(id);
   }
 
   @Get(':token')
