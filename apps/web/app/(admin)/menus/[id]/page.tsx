@@ -12,6 +12,7 @@ interface MenuItem {
   description: string;
   category: Category;
   price: number;
+  weight?: number;
 }
 
 interface Menu {
@@ -47,6 +48,7 @@ export default function MenuEditorPage() {
   const [itemDescription, setItemDescription] = useState('');
   const [itemCategory, setItemCategory] = useState<Category>('entrada');
   const [itemPrice, setItemPrice] = useState('');
+  const [itemWeight, setItemWeight] = useState('');
   const [adding, setAdding] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
@@ -77,12 +79,14 @@ export default function MenuEditorPage() {
         description: itemDescription,
         category: itemCategory,
         price: parseFloat(itemPrice),
+        weight: itemWeight ? parseInt(itemWeight) : undefined,
       });
       setMenu(updated);
       setItemName('');
       setItemDescription('');
       setItemCategory('entrada');
       setItemPrice('');
+      setItemWeight('');
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : 'Failed to add item');
     } finally {
@@ -105,6 +109,7 @@ export default function MenuEditorPage() {
     setItemDescription(item.description);
     setItemCategory(item.category);
     setItemPrice(item.price.toString());
+    setItemWeight(item.weight?.toString() || '');
   }
 
   async function handleUpdateItem(e: React.FormEvent) {
@@ -117,6 +122,7 @@ export default function MenuEditorPage() {
         description: itemDescription,
         category: itemCategory,
         price: parseFloat(itemPrice),
+        weight: itemWeight ? parseInt(itemWeight) : undefined,
       });
       setMenu(updated);
       cancelEdit();
@@ -133,6 +139,7 @@ export default function MenuEditorPage() {
     setItemDescription('');
     setItemCategory('entrada');
     setItemPrice('');
+    setItemWeight('');
   }
 
   if (loading) return <div className="p-8"><p className="text-gray-500">Loading...</p></div>;
@@ -232,6 +239,16 @@ export default function MenuEditorPage() {
               className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40"
             />
           </div>
+          <div>
+            <label className="text-sm text-gray-400">Weight (g, optional)</label>
+            <input
+              type="number"
+              min="0"
+              value={itemWeight}
+              onChange={(e) => setItemWeight(e.target.value)}
+              className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40"
+            />
+          </div>
         </div>
         <div className="mt-4 flex gap-3">
           <button
@@ -271,6 +288,7 @@ export default function MenuEditorPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-3 ml-4">
+                      {item.weight && <span className="text-xs text-gray-500">{item.weight}g</span>}
                       <span className="text-sm font-medium">{formatPrice(item.price)}</span>
                       <button onClick={() => startEdit(item)} className="text-xs text-gray-400 hover:text-white">Edit</button>
                       <button onClick={() => handleDeleteItem(item._id)} className="text-xs text-red-400 hover:text-red-300">Del</button>

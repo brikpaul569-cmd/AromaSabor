@@ -52,7 +52,7 @@ export class MenusService {
     return menu.save();
   }
 
-  async updateItem(menuId: string, itemId: string, data: { name?: string; description?: string; category?: string; price?: number }) {
+  async updateItem(menuId: string, itemId: string, data: { name?: string; description?: string; category?: string; price?: number; weight?: number }) {
     if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(itemId)) {
       throw new NotFoundException('Invalid ID');
     }
@@ -67,6 +67,7 @@ export class MenusService {
           ...(data.description !== undefined && { 'items.$.description': data.description }),
           ...(data.category && { 'items.$.category': data.category }),
           ...(data.price !== undefined && { 'items.$.price': data.price }),
+          ...(data.weight !== undefined && { 'items.$.weight': data.weight }),
         },
       },
       { new: true },

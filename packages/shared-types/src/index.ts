@@ -24,6 +24,7 @@ export interface MenuItem {
   description: string;
   category: CategoryType;
   price: number;
+  weight?: number;
 }
 
 export interface Menu {

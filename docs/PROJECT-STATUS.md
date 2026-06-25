@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-24
-> **Phase:** Sprint 1 — Complete (Stories 1–5) ✅
+> **Phase:** Sprint 2 — Plate Builder (Stories 6–8) ✅
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -87,8 +87,8 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 ## 5. Sprint Allocation (Final)
 
 ```
-Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus)
-Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual)
+Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
+Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual) ✅
 Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing)
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send)
 Sprint 5 (1 week)  → Stories 14-16 (Client access + expiration + QR)
@@ -254,7 +254,38 @@ Sprint 1 (Stories 1–5).
 
 ---
 
-## 12. Sprint 1 Complete 🎉
+## 12. Sprint 2 — Plate Builder (Stories 6–8) ✅
+
+### What was built
+
+- **Plate visual**: centered stacked plate view with layered categories (entrada → plato_fuerte → guarnicion → postre), each with name + weight display. CSS fade-in animation on selection.
+- **Item selection**: category accordion with item list (name, description, weight, price). Tap to select/deselect. Max 1 item per category.
+- **Zustand store** (`apps/web/stores/plate-store.ts`): manages one selection per category, with select/deselect/clear/isSelected helpers.
+- **Weight field** added to MenuItem schema (grams, optional). Included in admin menu editor form and displayed in both admin edit and public plate view.
+
+### Files created
+
+- `apps/web/stores/plate-store.ts`
+- `apps/web/hooks/` — directory created (ready for Sprint 3)
+
+### Files modified
+
+- `apps/api/src/schemas/menu.schema.ts` — added `weight` to MenuItem
+- `packages/shared-types/src/index.ts` — added `weight` to MenuItem interface
+- `apps/web/app/(admin)/menus/[id]/page.tsx` — weight field in form, weight shown in item list
+- `apps/web/app/(public)/menu/[slug]/page.tsx` — full Plate Builder with selection + visual
+- `apps/web/tailwind.config.js` — added `fadeIn` keyframe animation
+- `apps/api/src/modules/menus/menus.service.ts` — added weight to updateItem signature
+
+### Not yet implemented (Sprint 3)
+
+- Replace/remove items (Story 9)
+- Quantity / number of people adjustment (Story 10)
+- Live pricing with IVA breakdown (Story 11)
+
+---
+
+## 13. Sprint 1 Complete 🎉
 
 Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
@@ -264,11 +295,9 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 - ✅ Manage items (add, edit, delete items with category + price)
 - ✅ Publish menu (toggle active, public page at `/menu/:slug`)
 
-### Next up: Sprint 2 — Plate Builder (Stories 6–8)
-
 ---
 
-## 13. Risks (Final Assessment)
+## 14. Risks (Final Assessment)
 
 | # | Risk | Mitigation |
 |---|------|------------|
@@ -281,7 +310,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 14. What Success Looks Like (MVP)
+## 15. What Success Looks Like (MVP)
 
 - Chef can log in, create menus, add items
 - Client opens a link, sees a visual plate builder, builds a plate

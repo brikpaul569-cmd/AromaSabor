@@ -16,6 +16,9 @@ class MenuItem {
 
   @Prop({ required: true, min: 0 })
   price!: number;
+
+  @Prop({ min: 0 })
+  weight?: number;
 }
 
 const MenuItemSchema = SchemaFactory.createForClass(MenuItem);
