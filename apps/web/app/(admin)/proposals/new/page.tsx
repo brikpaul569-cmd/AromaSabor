@@ -5,40 +5,42 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import PricingBreakdown from '@/components/PricingBreakdown';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
 interface MenuItem {
   _id: string;
   name: string;
-  description: string;
-  category: Category;
-  price: number;
-  weight?: number;
+  description?: string;
+  portionGrams?: number;
+  pricePerPortion: number;
+  unit: string;
+  isAvailable: boolean;
+}
+
+interface MenuCategory {
+  _id: string;
+  id: string;
+  label: string;
+  maxItems: number;
+  items: MenuItem[];
 }
 
 interface Menu {
   _id: string;
   name: string;
   description?: string;
-  items: MenuItem[];
+  categories: MenuCategory[];
 }
 
 interface SelectedItem {
   _id: string;
   name: string;
   description: string;
-  category: Category;
-  price: number;
+  categoryId: string;
+  categoryLabel: string;
+  pricePerPortion: number;
+  portionGrams?: number;
+  unit: string;
   quantity: number;
 }
-
-const CATEGORY_ORDER: Category[] = ['entrada', 'plato_fuerte', 'guarnicion', 'postre'];
-const CATEGORY_LABELS: Record<Category, string> = {
-  entrada: 'Entrada',
-  plato_fuerte: 'Plato Fuerte',
-  guarnicion: 'Guarnición',
-  postre: 'Postre',
-};
 
 function formatPrice(price: number): string {
   return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
@@ -67,23 +69,25 @@ export default function NewProposalPage() {
 
   const currentMenu = menus.find((m) => m._id === selectedMenuId);
 
-  const groupedItems = currentMenu
-    ? CATEGORY_ORDER.map((cat) => ({
-        category: cat,
-        label: CATEGORY_LABELS[cat],
-        items: currentMenu.items.filter((i) => i.category === cat),
-      }))
-    : [];
-
   const selectedArray = Array.from(selectedItems.values());
 
-  function toggleItem(item: MenuItem) {
+  function toggleItem(cat: MenuCategory, item: MenuItem) {
     setSelectedItems((prev) => {
       const next = new Map(prev);
       if (next.has(item._id)) {
         next.delete(item._id);
       } else {
-        next.set(item._id, { ...item, quantity: itemQuantities.get(item._id) ?? 1 });
+        next.set(item._id, {
+          _id: item._id,
+          name: item.name,
+          description: item.description || '',
+          categoryId: cat._id,
+          categoryLabel: cat.label,
+          pricePerPortion: item.pricePerPortion,
+          portionGrams: item.portionGrams,
+          unit: item.unit || 'gr',
+          quantity: itemQuantities.get(item._id) ?? 1,
+        });
       }
       return next;
     });
@@ -119,8 +123,11 @@ export default function NewProposalPage() {
         items: selectedArray.map((i) => ({
           name: i.name,
           description: i.description,
-          category: i.category,
-          price: i.price,
+          categoryId: i.categoryId,
+          categoryLabel: i.categoryLabel,
+          pricePerPortion: i.pricePerPortion,
+          portionGrams: i.portionGrams,
+          unit: i.unit,
           quantity: i.quantity,
         })),
         clientName: clientName.trim(),
@@ -139,7 +146,6 @@ export default function NewProposalPage() {
     <div className="mx-auto max-w-3xl p-8">
       <h1 className="text-3xl font-bold">New Proposal</h1>
 
-      {/* Menu selector */}
       <div className="mt-8">
         <label className="mb-2 block text-sm text-gray-400">Menu</label>
         <select
@@ -158,17 +164,17 @@ export default function NewProposalPage() {
         </select>
       </div>
 
-      {/* Items */}
       {currentMenu && (
         <div className="mt-8 space-y-6">
           <h2 className="text-lg font-semibold text-white/80">Select items</h2>
-          {groupedItems.map((group) => {
-            if (group.items.length === 0) return null;
+          {currentMenu.categories.map((cat) => {
+            const available = cat.items.filter((i) => i.isAvailable);
+            if (available.length === 0) return null;
             return (
-              <div key={group.category}>
-                <h3 className="mb-2 text-sm font-medium text-gray-400">{group.label}</h3>
+              <div key={cat._id}>
+                <h3 className="mb-2 text-sm font-medium text-gray-400">{cat.label}</h3>
                 <div className="space-y-2">
-                  {group.items.map((item) => {
+                  {available.map((item) => {
                     const isSelected = selectedItems.has(item._id);
                     return (
                       <label
@@ -182,7 +188,7 @@ export default function NewProposalPage() {
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleItem(item)}
+                          onChange={() => toggleItem(cat, item)}
                           className="h-4 w-4 accent-green-500"
                         />
                         <div className="min-w-0 flex-1">
@@ -191,7 +197,10 @@ export default function NewProposalPage() {
                             <p className="truncate text-xs text-gray-500">{item.description}</p>
                           )}
                         </div>
-                        <span className="text-sm font-medium">{formatPrice(item.price)}</span>
+                        {item.portionGrams && (
+                          <span className="text-xs text-gray-500">{item.portionGrams}{item.unit}</span>
+                        )}
+                        <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
                         {isSelected && (
                           <input
                             type="number"
@@ -212,62 +221,45 @@ export default function NewProposalPage() {
         </div>
       )}
 
-      {/* Client info */}
       <div className="mt-8 grid gap-6 sm:grid-cols-2">
         <div>
           <label className="mb-2 block text-sm text-gray-400">Client name</label>
-          <input
-            type="text"
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
+          <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)}
             placeholder="María Gómez"
-            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
-          />
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40" />
         </div>
         <div>
           <label className="mb-2 block text-sm text-gray-400">Event date</label>
-          <input
-            type="date"
-            value={eventDate}
-            onChange={(e) => setEventDate(e.target.value)}
-            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
-          />
+          <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40" />
         </div>
       </div>
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div>
           <label className="mb-2 block text-sm text-gray-400">Number of people</label>
-          <input
-            type="number"
-            min={1}
-            value={guestCount}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              setGuestCount(isNaN(v) || v < 1 ? 1 : v);
-            }}
-            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-          />
+          <input type="number" min={1} value={guestCount}
+            onChange={(e) => { const v = Number(e.target.value); setGuestCount(isNaN(v) || v < 1 ? 1 : v); }}
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
         </div>
         <div>
           <label className="mb-2 block text-sm text-gray-400">Notes</label>
-          <input
-            type="text"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+          <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
             placeholder="Optional notes"
-            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
-          />
+            className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40" />
         </div>
       </div>
 
-      {/* Preview */}
       {selectedArray.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-4 text-lg font-semibold text-white/80">Preview</h2>
           <div className="flex flex-wrap gap-8">
             <div className="flex-1 min-w-[280px]">
-              <PricingBreakdown items={selectedArray} guestCount={guestCount} />
+              <PricingBreakdown
+                items={selectedArray}
+                guestCount={guestCount}
+                categories={currentMenu?.categories.map((c) => ({ id: c.id, label: c.label })) ?? []}
+              />
             </div>
             <div className="flex-1 min-w-[200px] space-y-3">
               <h3 className="text-sm font-medium text-gray-400">Selected items</h3>
@@ -282,26 +274,14 @@ export default function NewProposalPage() {
         </div>
       )}
 
-      {/* Error */}
-      {error && (
-        <p className="mt-4 text-sm text-red-400">{error}</p>
-      )}
+      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
 
-      {/* Save */}
       <div className="mt-8 flex items-center gap-4">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="rounded-lg bg-white/10 px-6 py-3 font-medium text-white transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
-        >
+        <button onClick={handleSave} disabled={saving}
+          className="rounded-lg bg-white/10 px-6 py-3 font-medium text-white transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
           {saving ? 'Saving...' : 'Save as Draft'}
         </button>
-        <button
-          onClick={() => router.push('/proposals')}
-          className="text-sm text-gray-500 hover:text-white"
-        >
-          Cancel
-        </button>
+        <button onClick={() => router.push('/proposals')} className="text-sm text-gray-500 hover:text-white">Cancel</button>
       </div>
     </div>
   );

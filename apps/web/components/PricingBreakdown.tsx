@@ -2,51 +2,27 @@
 
 import { calculateQuotation } from '@aromasabor/utils';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
-interface MenuItem {
+export interface PricingItem {
   _id: string;
   name: string;
-  description: string;
-  category: Category;
-  price: number;
-  weight?: number;
+  pricePerPortion: number;
+  categoryLabel?: string;
 }
 
 interface PricingBreakdownProps {
-  items: MenuItem[];
+  items: PricingItem[];
   guestCount: number;
+  categories: { id: string; label: string }[];
 }
-
-const CATEGORY_LABELS: Record<Category, string> = {
-  entrada: 'Entrada',
-  plato_fuerte: 'Plato Fuerte',
-  guarnicion: 'Guarnición',
-  postre: 'Postre',
-};
 
 function formatPrice(price: number): string {
   return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
-export default function PricingBreakdown({ items, guestCount }: PricingBreakdownProps) {
-  const perPlate = items.reduce((sum, i) => sum + i.price, 0);
+export default function PricingBreakdown({ items, guestCount, categories }: PricingBreakdownProps) {
+  const perPlate = items.reduce((sum, i) => sum + i.pricePerPortion, 0);
   const q = calculateQuotation(
-    items.map((i) => ({ price: i.price, quantity: guestCount }))
-  );
-
-  const categories: Record<Category, MenuItem[]> = {
-    entrada: [],
-    plato_fuerte: [],
-    guarnicion: [],
-    postre: [],
-  };
-  for (const item of items) {
-    categories[item.category]?.push(item);
-  }
-
-  const activeCategories = (Object.keys(categories) as Category[]).filter(
-    (c) => categories[c].length > 0
+    items.map((i) => ({ price: i.pricePerPortion, quantity: guestCount })),
   );
 
   if (items.length === 0) {
@@ -57,14 +33,21 @@ export default function PricingBreakdown({ items, guestCount }: PricingBreakdown
     );
   }
 
+  const catTotals = new Map<string, number>();
+  for (const item of items) {
+    const label = item.categoryLabel || 'Other';
+    catTotals.set(label, (catTotals.get(label) || 0) + item.pricePerPortion);
+  }
+
   return (
     <div className="w-full max-w-xs rounded-lg bg-white/5 px-4 py-3 text-sm">
-      {activeCategories.map((cat) => {
-        const catTotal = categories[cat].reduce((s, i) => s + i.price, 0);
+      {categories.map((cat) => {
+        const total = catTotals.get(cat.label);
+        if (!total) return null;
         return (
-          <div key={cat} className="flex justify-between text-gray-400">
-            <span>{CATEGORY_LABELS[cat]}</span>
-            <span>{formatPrice(catTotal)}</span>
+          <div key={cat.id} className="flex justify-between text-gray-400">
+            <span>{cat.label}</span>
+            <span>{formatPrice(total)}</span>
           </div>
         );
       })}

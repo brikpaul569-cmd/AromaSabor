@@ -1,21 +1,19 @@
 'use client';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
-interface MenuItem {
+export interface ReplaceItem {
   _id: string;
   name: string;
-  description: string;
-  category: Category;
-  price: number;
-  weight?: number;
+  description?: string;
+  portionGrams?: number;
+  pricePerPortion: number;
+  unit: string;
 }
 
 interface ReplaceSelectorProps {
   categoryLabel: string;
-  items: MenuItem[];
+  items: ReplaceItem[];
   currentItemId: string;
-  onSelect: (item: MenuItem) => void;
+  onSelect: (item: ReplaceItem) => void;
   onClose: () => void;
 }
 
@@ -51,8 +49,8 @@ export default function ReplaceSelector({ categoryLabel, items, currentItemId, o
                     )}
                   </div>
                   <div className="ml-4 flex shrink-0 items-center gap-3">
-                    {item.weight && <span className="text-xs text-gray-500">{item.weight}g</span>}
-                    <span className="text-sm font-medium">{formatPrice(item.price)}</span>
+                    {item.portionGrams && <span className="text-xs text-gray-500">{item.portionGrams}{item.unit}</span>}
+                    <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
                   </div>
                 </button>
               </li>

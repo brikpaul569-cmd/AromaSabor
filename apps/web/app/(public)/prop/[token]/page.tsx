@@ -5,14 +5,15 @@ import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import PricingBreakdown from '@/components/PricingBreakdown';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
 interface ProposalItem {
   _id: string;
   name: string;
   description: string;
-  category: Category;
-  price: number;
+  categoryId: string;
+  categoryLabel: string;
+  pricePerPortion: number;
+  portionGrams?: number;
+  unit: string;
   quantity: number;
 }
 
@@ -62,9 +63,7 @@ function formatPrice(price: number): string {
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    year: 'numeric', month: 'long', day: 'numeric',
   });
 }
 
@@ -117,11 +116,11 @@ export default function PublicProposalPage() {
 
   const isExpired = proposal.status === 'expirado';
   const isActive = proposal.status === 'enviado';
+  const uniqueCategories = [...new Map(proposal.items.map((i) => [i.categoryId, { id: i.categoryId, label: i.categoryLabel }])).values()];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       <div className="mx-auto max-w-3xl p-8">
-        {/* Expired banner */}
         {isExpired && (
           <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 px-5 py-4 text-center">
             <p className="text-lg font-semibold text-red-300">This proposal has expired</p>
@@ -129,29 +128,22 @@ export default function PublicProposalPage() {
           </div>
         )}
 
-        {/* Active banner */}
         {isActive && (
           <div className="mb-6 rounded-lg border border-green-500/20 bg-green-500/10 px-5 py-4 text-center">
-            <p className="text-sm text-green-300">
-              This proposal is active and ready for your review.
-            </p>
+            <p className="text-sm text-green-300">This proposal is active and ready for your review.</p>
           </div>
         )}
 
-        {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">{proposal.clientName}</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {formatDate(proposal.eventDate)}
-            </p>
+            <p className="mt-1 text-sm text-gray-500">{formatDate(proposal.eventDate)}</p>
           </div>
           <span className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
             {STATUS_LABELS[proposal.status] || proposal.status}
           </span>
         </div>
 
-        {/* Info cards */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg bg-white/5 px-4 py-3">
             <p className="text-xs text-gray-500">Menu</p>
@@ -174,13 +166,16 @@ export default function PublicProposalPage() {
           </div>
         )}
 
-        {/* Items + Pricing */}
         {proposal.items.length > 0 && (
           <div className="mt-8">
             <h2 className="mb-4 text-lg font-semibold text-white/80">Menu Items</h2>
             <div className="flex flex-wrap gap-8">
               <div className="flex-1 min-w-[280px]">
-                <PricingBreakdown items={proposal.items} guestCount={proposal.guestCount} />
+                <PricingBreakdown
+                  items={proposal.items.map((i) => ({ _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel }))}
+                  guestCount={proposal.guestCount}
+                  categories={uniqueCategories}
+                />
               </div>
               <div className="flex-1 min-w-[200px] space-y-2">
                 {proposal.items.map((item) => (
@@ -194,7 +189,6 @@ export default function PublicProposalPage() {
           </div>
         )}
 
-        {/* Footer */}
         <div className="mt-8 border-t border-white/5 pt-4 text-center text-xs text-gray-600">
           <p>AromaSabor — Proposal</p>
         </div>

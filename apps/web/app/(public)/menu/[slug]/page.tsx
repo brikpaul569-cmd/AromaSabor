@@ -3,35 +3,47 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
-import { usePlateStore } from '@/stores/plate-store';
+import { usePlateStore, CategoryItem } from '@/stores/plate-store';
 import PlateView from '@/components/PlateView';
+import type { PlateItem } from '@/components/PlateView';
+import type { PopoverItem } from '@/components/PlateItemPopover';
 import PlateItemPopover from '@/components/PlateItemPopover';
 import ReplaceSelector from '@/components/ReplaceSelector';
+import type { ReplaceItem } from '@/components/ReplaceSelector';
 import PricingBreakdown from '@/components/PricingBreakdown';
+import type { PricingItem } from '@/components/PricingBreakdown';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
-interface MenuItem {
+interface MenuCategory {
   _id: string;
-  name: string;
-  description: string;
-  category: Category;
-  price: number;
-  weight?: number;
+  id: string;
+  label: string;
+  maxItems: number;
+  items: CategoryItem[];
 }
 
-interface Menu {
+interface MenuData {
   name: string;
   description?: string;
-  items: MenuItem[];
+  categories: MenuCategory[];
   createdBy: { name: string };
 }
 
-const CATEGORIES: { value: Category; label: string }[] = [
-  { value: 'entrada', label: 'Entrada' },
-  { value: 'plato_fuerte', label: 'Plato Fuerte' },
-  { value: 'guarnicion', label: 'Guarnición' },
-  { value: 'postre', label: 'Postre' },
+const plateColors: Record<string, string> = {
+  proteinas: 'bg-red-800/50',
+  carbohidratos: 'bg-yellow-700/50',
+  ensaladas: 'bg-green-800/50',
+  salsas: 'bg-amber-800/60',
+  bebidas: 'bg-blue-800/50',
+  entrada: 'bg-green-800/50',
+  plato_fuerte: 'bg-red-800/50',
+  guarnicion: 'bg-yellow-700/50',
+  postre: 'bg-amber-800/60',
+};
+
+const fallbackColors = [
+  'bg-red-800/50', 'bg-yellow-700/50', 'bg-green-800/50',
+  'bg-amber-800/60', 'bg-blue-800/50', 'bg-purple-800/50',
+  'bg-pink-800/50', 'bg-indigo-800/50',
 ];
 
 function formatPrice(price: number): string {
@@ -42,62 +54,77 @@ export default function PublicMenuPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  const [menu, setMenu] = useState<Menu | null>(null);
+  const [menu, setMenu] = useState<MenuData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<Category | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  // Story 9 state
-  const [activePlateItem, setActivePlateItem] = useState<MenuItem | null>(null);
-  const [replaceCategory, setReplaceCategory] = useState<Category | null>(null);
+  const [activePlateItem, setActivePlateItem] = useState<PopoverItem | null>(null);
+  const [replaceCategoryId, setReplaceCategoryId] = useState<string | null>(null);
 
   const selections = usePlateStore((s) => s.selections);
   const guestCount = usePlateStore((s) => s.guestCount);
+  const initCategories = usePlateStore((s) => s.initCategories);
   const selectItem = usePlateStore((s) => s.selectItem);
   const deselectItem = usePlateStore((s) => s.deselectItem);
   const clearAll = usePlateStore((s) => s.clearAll);
   const setGuestCount = usePlateStore((s) => s.setGuestCount);
-  const selectedItems = usePlateStore((s) => s.selectedItems());
   const isSelected = usePlateStore((s) => s.isSelected);
-
-  const sel = selectedItems;
+  const getSelectionCount = usePlateStore((s) => s.getSelectionCount);
 
   useEffect(() => {
-    api.get<Menu>('/menus/slug/' + slug)
-      .then(setMenu)
+    api.get<MenuData>('/menus/slug/' + slug)
+      .then((data) => {
+        setMenu(data);
+        initCategories(data.categories.map((c) => ({ _id: c._id, id: c.id, label: c.label, maxItems: c.maxItems })));
+      })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, initCategories]);
 
-  const handleItemTap = useCallback((item: MenuItem) => {
-    setActivePlateItem(item);
+  const handleItemTap = useCallback((item: PlateItem) => {
+    setActivePlateItem({
+      _id: item._id,
+      name: item.name,
+      description: item.description,
+      portionGrams: item.portionGrams,
+      pricePerPortion: item.pricePerPortion,
+      unit: item.unit,
+      categoryId: item.categoryId,
+    });
   }, []);
 
   const handleRemove = useCallback(() => {
     if (!activePlateItem) return;
-    deselectItem(activePlateItem.category);
+    deselectItem(activePlateItem.categoryId, activePlateItem._id);
     setActivePlateItem(null);
   }, [activePlateItem, deselectItem]);
 
   const handleReplaceOpen = useCallback(() => {
     if (!activePlateItem) return;
-    setReplaceCategory(activePlateItem.category);
+    setReplaceCategoryId(activePlateItem.categoryId);
   }, [activePlateItem]);
 
-  const handleReplaceSelect = useCallback((item: MenuItem) => {
-    selectItem(item);
-    setReplaceCategory(null);
+  const handleReplaceSelect = useCallback((item: ReplaceItem) => {
+    if (!replaceCategoryId || !activePlateItem) return;
+    deselectItem(activePlateItem.categoryId, activePlateItem._id);
+    const cat = menu?.categories.find((c) => c._id === replaceCategoryId);
+    if (!cat) return;
+    const fullItem = cat.items.find((i) => i._id === item._id);
+    if (fullItem) {
+      selectItem(replaceCategoryId, fullItem, cat.maxItems);
+    }
+    setReplaceCategoryId(null);
     setActivePlateItem(null);
-  }, [selectItem]);
+  }, [replaceCategoryId, activePlateItem, menu, selectItem, deselectItem]);
 
-  const grouped = CATEGORIES.map((cat) => ({
-    ...cat,
-    items: menu?.items.filter((i) => i.category === cat.value) ?? [],
-  }));
-
-  const replaceGroup = replaceCategory
-    ? grouped.find((g) => g.value === replaceCategory)
-    : null;
+  const handleItemSelect = useCallback((cat: MenuCategory, item: CategoryItem) => {
+    if (isSelected(cat._id, item._id)) {
+      deselectItem(cat._id, item._id);
+    } else {
+      selectItem(cat._id, item, cat.maxItems);
+    }
+  }, [isSelected, deselectItem, selectItem]);
 
   if (loading) {
     return (
@@ -116,6 +143,28 @@ export default function PublicMenuPage() {
     );
   }
 
+  const categoryOrder = menu.categories.map((cat) => ({
+    id: cat._id,
+    label: cat.label,
+    color: plateColors[cat.id] || fallbackColors[menu.categories.indexOf(cat) % fallbackColors.length],
+  }));
+
+  const sel: PlateItem[] = [];
+  for (const [catId, items] of Object.entries(selections)) {
+    const cat = menu.categories.find((c) => c._id === catId);
+    for (const item of items) {
+      sel.push({ ...item, categoryId: catId, categoryLabel: cat?.label });
+    }
+  }
+
+  const pricingItems: PricingItem[] = sel.map((i) => ({
+    _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel,
+  }));
+
+  const activePlateCat = activePlateItem
+    ? menu.categories.find((c) => c._id === activePlateItem.categoryId)
+    : null;
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="mx-auto max-w-5xl px-4 py-12">
@@ -125,14 +174,12 @@ export default function PublicMenuPage() {
           <p className="mt-1 text-sm text-gray-500">by {menu.createdBy?.name || 'Chef'}</p>
         </header>
 
-        {/* Plate visual + selection */}
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
           {/* Plate view */}
           <div className="relative flex flex-col items-center justify-center">
             <h2 className="mb-6 text-lg font-semibold text-white/80">Your Plate</h2>
-            <PlateView items={sel} onItemTap={handleItemTap} />
+            <PlateView items={sel} categoryOrder={categoryOrder} onItemTap={handleItemTap} />
 
-            {/* Guest count */}
             <div className="mt-6 w-full max-w-xs">
               <label className="mb-2 block text-sm text-gray-400">Number of people</label>
               <div className="flex items-center gap-3">
@@ -140,43 +187,31 @@ export default function PublicMenuPage() {
                   onClick={() => setGuestCount(guestCount - 1)}
                   disabled={guestCount <= 1}
                   className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-lg transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  −
-                </button>
+                >−</button>
                 <input
-                  type="number"
-                  min={1}
-                  value={guestCount}
+                  type="number" min={1} value={guestCount}
                   onChange={(e) => setGuestCount(Number(e.target.value))}
                   className="h-10 w-20 rounded-lg bg-white/10 px-3 text-center text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
                 <button
                   onClick={() => setGuestCount(guestCount + 1)}
                   className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-lg transition hover:bg-white/20"
-                >
-                  +
-                </button>
+                >+</button>
               </div>
             </div>
 
-            {/* Pricing summary */}
             <div className="mt-6">
-              <PricingBreakdown items={sel} guestCount={guestCount} />
+              <PricingBreakdown items={pricingItems} guestCount={guestCount} categories={categoryOrder} />
             </div>
 
             {sel.length > 0 && (
-              <button
-                onClick={clearAll}
-                className="mt-4 text-sm text-gray-500 hover:text-white"
-              >
-                Clear plate
-              </button>
+              <button onClick={clearAll} className="mt-4 text-sm text-gray-500 hover:text-white">Clear plate</button>
             )}
 
-            {activePlateItem && !replaceCategory && (
+            {activePlateItem && !replaceCategoryId && (
               <PlateItemPopover
                 item={activePlateItem}
-                canReplace={(grouped.find((g) => g.value === activePlateItem.category)?.items.length ?? 0) > 1}
+                canReplace={(activePlateCat?.items.length ?? 0) > 1}
                 onRemove={handleRemove}
                 onReplace={handleReplaceOpen}
                 onClose={() => setActivePlateItem(null)}
@@ -186,61 +221,58 @@ export default function PublicMenuPage() {
 
           {/* Category items */}
           <div className="space-y-6">
-            {grouped.map((group) => {
-              const selected = selections[group.value];
-              const isOpen = activeCategory === group.value;
+            {menu.categories.map((cat) => {
+              const isOpen = activeCategory === cat._id;
+              const selCount = getSelectionCount(cat._id);
+              const remaining = cat.maxItems - selCount;
 
               return (
-                <div key={group.value}>
+                <div key={cat._id}>
                   <button
-                    onClick={() => setActiveCategory(isOpen ? null : group.value)}
+                    onClick={() => setActiveCategory(isOpen ? null : cat._id)}
                     className="flex w-full items-center justify-between rounded-lg bg-white/5 px-4 py-3 text-left transition hover:bg-white/10"
                   >
                     <span className="font-medium">
-                      {group.label}
-                      {selected && (
-                        <span className="ml-2 text-sm text-green-400">({selected.name})</span>
+                      {cat.label}
+                      {selCount > 0 && (
+                        <span className="ml-2 text-sm text-green-400">({selCount}/{cat.maxItems})</span>
                       )}
                     </span>
-                    <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-                      ▼
-                    </span>
+                    <span className={`text-xs text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
                   </button>
 
                   {isOpen && (
                     <ul className="mt-2 space-y-2">
-                      {group.items.length === 0 ? (
+                      {cat.items.length === 0 ? (
                         <p className="px-4 py-2 text-sm text-gray-500">No items</p>
                       ) : (
-                        group.items.map((item) => {
-                          const selected = isSelected(item);
+                        cat.items.filter((i) => i.isAvailable).map((item) => {
+                          const selected = isSelected(cat._id, item._id);
+                          const canSelect = !selected && remaining <= 0;
                           return (
                             <li key={item._id}>
                               <button
-                                onClick={() => {
-                                  if (selected) {
-                                    deselectItem(item.category);
-                                  } else {
-                                    selectItem(item);
-                                  }
-                                }}
+                                onClick={() => handleItemSelect(cat, item)}
+                                disabled={canSelect}
                                 className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition ${
                                   selected
                                     ? 'bg-green-500/20 ring-1 ring-green-400/40'
-                                    : 'bg-white/5 hover:bg-white/10'
+                                    : canSelect
+                                      ? 'bg-white/5 opacity-40 cursor-not-allowed'
+                                      : 'bg-white/5 hover:bg-white/10'
                                 }`}
                               >
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-medium">{item.name}</p>
                                   {item.description && (
-                                    <p className="text-xs text-gray-500 truncate">{item.description}</p>
+                                    <p className="truncate text-xs text-gray-500">{item.description}</p>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-3 ml-4 shrink-0">
-                                  {item.weight && (
-                                    <span className="text-xs text-gray-500">{item.weight}g</span>
+                                  {item.portionGrams && (
+                                    <span className="text-xs text-gray-500">{item.portionGrams}{item.unit}</span>
                                   )}
-                                  <span className="text-sm font-medium">{formatPrice(item.price)}</span>
+                                  <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
                                   <span className="text-xs">{selected ? '✓' : '+'}</span>
                                 </div>
                               </button>
@@ -257,14 +289,13 @@ export default function PublicMenuPage() {
         </div>
       </div>
 
-      {/* Replace selector modal */}
-      {replaceGroup && activePlateItem && (
+      {replaceCategoryId && activePlateItem && activePlateCat && (
         <ReplaceSelector
-          categoryLabel={replaceGroup.label}
-          items={replaceGroup.items}
+          categoryLabel={activePlateCat.label}
+          items={activePlateCat.items}
           currentItemId={activePlateItem._id}
           onSelect={handleReplaceSelect}
-          onClose={() => setReplaceCategory(null)}
+          onClose={() => setReplaceCategoryId(null)}
         />
       )}
     </div>

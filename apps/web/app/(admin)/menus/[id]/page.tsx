@@ -4,15 +4,23 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ApiClientError } from '@/lib/api';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
-interface MenuItem {
+interface MenuCategoryItem {
   _id: string;
   name: string;
-  description: string;
-  category: Category;
-  price: number;
-  weight?: number;
+  description?: string;
+  imageUrl?: string;
+  portionGrams?: number;
+  pricePerPortion: number;
+  unit: string;
+  isAvailable: boolean;
+}
+
+interface MenuCategory {
+  _id: string;
+  id: string;
+  label: string;
+  maxItems: number;
+  items: MenuCategoryItem[];
 }
 
 interface Menu {
@@ -20,19 +28,12 @@ interface Menu {
   name: string;
   slug: string;
   description?: string;
-  items: MenuItem[];
+  categories: MenuCategory[];
   isActive: boolean;
 }
 
-const CATEGORIES: { value: Category; label: string }[] = [
-  { value: 'entrada', label: 'Entrada' },
-  { value: 'plato_fuerte', label: 'Plato Fuerte' },
-  { value: 'guarnicion', label: 'Guarnición' },
-  { value: 'postre', label: 'Postre' },
-];
-
 function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-MX', { minimumFractionDigits: 2 });
+  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 export default function MenuEditorPage() {
@@ -44,14 +45,28 @@ export default function MenuEditorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [publishing, setPublishing] = useState(false);
+
+  // Category form
+  const [catId, setCatId] = useState('');
+  const [catLabel, setCatLabel] = useState('');
+  const [catMaxItems, setCatMaxItems] = useState('1');
+  const [addingCat, setAddingCat] = useState(false);
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [showCatForm, setShowCatForm] = useState(false);
+
+  // Item form
+  const [itemCategoryId, setItemCategoryId] = useState('');
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
-  const [itemCategory, setItemCategory] = useState<Category>('entrada');
   const [itemPrice, setItemPrice] = useState('');
-  const [itemWeight, setItemWeight] = useState('');
-  const [adding, setAdding] = useState(false);
+  const [itemPortionGrams, setItemPortionGrams] = useState('');
+  const [itemUnit, setItemUnit] = useState('gr');
+  const [itemAvailable, setItemAvailable] = useState(true);
+  const [addingItem, setAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [publishing, setPublishing] = useState(false);
+  const [editingItemCatId, setEditingItemCatId] = useState<string | null>(null);
+  const [showItemForm, setShowItemForm] = useState(false);
 
   const fetchMenu = useCallback(async () => {
     try {
@@ -70,85 +85,139 @@ export default function MenuEditorPage() {
 
   useEffect(() => { fetchMenu(); }, [fetchMenu]);
 
-  async function handleAddItem(e: React.FormEvent) {
+  function resetCatForm() {
+    setCatId(''); setCatLabel(''); setCatMaxItems('1');
+    setEditingCatId(null); setShowCatForm(false);
+  }
+
+  function resetItemForm() {
+    setItemCategoryId(''); setItemName(''); setItemDescription('');
+    setItemPrice(''); setItemPortionGrams(''); setItemUnit('gr');
+    setItemAvailable(true); setEditingItemId(null); setEditingItemCatId(null);
+    setShowItemForm(false);
+  }
+
+  async function handleAddCategory(e: React.FormEvent) {
     e.preventDefault();
-    setAdding(true);
+    setAddingCat(true);
     try {
-      const updated = await api.post<Menu>(`/menus/${id}/items`, {
-        name: itemName,
-        description: itemDescription,
-        category: itemCategory,
-        price: parseFloat(itemPrice),
-        weight: itemWeight ? parseInt(itemWeight) : undefined,
+      const updated = await api.post<Menu>(`/menus/${id}/categories`, {
+        id: catId.trim().toLowerCase().replace(/\s+/g, '-'),
+        label: catLabel.trim(),
+        maxItems: parseInt(catMaxItems) || 1,
       });
       setMenu(updated);
-      setItemName('');
-      setItemDescription('');
-      setItemCategory('entrada');
-      setItemPrice('');
-      setItemWeight('');
+      resetCatForm();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to add item');
+      setError(err instanceof ApiClientError ? err.message : 'Failed to add category');
     } finally {
-      setAdding(false);
+      setAddingCat(false);
     }
   }
 
-  async function handleDeleteItem(itemId: string) {
+  async function handleUpdateCategory(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingCatId) return;
+    setAddingCat(true);
     try {
-      const updated = await api.delete<Menu>(`/menus/${id}/items/${itemId}`);
+      const updated = await api.patch<Menu>(`/menus/${id}/categories/${editingCatId}`, {
+        id: catId.trim().toLowerCase().replace(/\s+/g, '-'),
+        label: catLabel.trim(),
+        maxItems: parseInt(catMaxItems) || 1,
+      });
+      setMenu(updated);
+      resetCatForm();
+    } catch (err) {
+      setError(err instanceof ApiClientError ? err.message : 'Failed to update category');
+    } finally {
+      setAddingCat(false);
+    }
+  }
+
+  async function handleDeleteCategory(categoryId: string) {
+    try {
+      const updated = await api.delete<Menu>(`/menus/${id}/categories/${categoryId}`);
+      setMenu(updated);
+    } catch (err) {
+      setError(err instanceof ApiClientError ? err.message : 'Failed to delete category');
+    }
+  }
+
+  function startEditCategory(cat: MenuCategory) {
+    setCatId(cat.id);
+    setCatLabel(cat.label);
+    setCatMaxItems(cat.maxItems.toString());
+    setEditingCatId(cat._id);
+    setShowCatForm(true);
+  }
+
+  async function handleAddItem(e: React.FormEvent) {
+    e.preventDefault();
+    setAddingItem(true);
+    try {
+      const updated = await api.post<Menu>(`/menus/${id}/categories/${itemCategoryId}/items`, {
+        name: itemName,
+        description: itemDescription || undefined,
+        pricePerPortion: parseFloat(itemPrice),
+        portionGrams: itemPortionGrams ? parseInt(itemPortionGrams) : undefined,
+        unit: itemUnit,
+        isAvailable: itemAvailable,
+      });
+      setMenu(updated);
+      resetItemForm();
+    } catch (err) {
+      setError(err instanceof ApiClientError ? err.message : 'Failed to add item');
+    } finally {
+      setAddingItem(false);
+    }
+  }
+
+  async function handleUpdateItem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingItemId || !editingItemCatId) return;
+    setAddingItem(true);
+    try {
+      const updated = await api.patch<Menu>(`/menus/${id}/categories/${editingItemCatId}/items/${editingItemId}`, {
+        name: itemName,
+        description: itemDescription || undefined,
+        pricePerPortion: parseFloat(itemPrice),
+        portionGrams: itemPortionGrams ? parseInt(itemPortionGrams) : undefined,
+        unit: itemUnit,
+        isAvailable: itemAvailable,
+      });
+      setMenu(updated);
+      resetItemForm();
+    } catch (err) {
+      setError(err instanceof ApiClientError ? err.message : 'Failed to update item');
+    } finally {
+      setAddingItem(false);
+    }
+  }
+
+  async function handleDeleteItem(categoryId: string, itemId: string) {
+    try {
+      const updated = await api.delete<Menu>(`/menus/${id}/categories/${categoryId}/items/${itemId}`);
       setMenu(updated);
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : 'Failed to delete item');
     }
   }
 
-  function startEdit(item: MenuItem) {
-    setEditingItemId(item._id);
+  function startEditItem(catId: string, item: MenuCategoryItem) {
+    setItemCategoryId(catId);
     setItemName(item.name);
-    setItemDescription(item.description);
-    setItemCategory(item.category);
-    setItemPrice(item.price.toString());
-    setItemWeight(item.weight?.toString() || '');
-  }
-
-  async function handleUpdateItem(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editingItemId) return;
-    setAdding(true);
-    try {
-      const updated = await api.patch<Menu>(`/menus/${id}/items/${editingItemId}`, {
-        name: itemName,
-        description: itemDescription,
-        category: itemCategory,
-        price: parseFloat(itemPrice),
-        weight: itemWeight ? parseInt(itemWeight) : undefined,
-      });
-      setMenu(updated);
-      cancelEdit();
-    } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to update item');
-    } finally {
-      setAdding(false);
-    }
-  }
-
-  function cancelEdit() {
-    setEditingItemId(null);
-    setItemName('');
-    setItemDescription('');
-    setItemCategory('entrada');
-    setItemPrice('');
-    setItemWeight('');
+    setItemDescription(item.description || '');
+    setItemPrice(item.pricePerPortion.toString());
+    setItemPortionGrams(item.portionGrams?.toString() || '');
+    setItemUnit(item.unit || 'gr');
+    setItemAvailable(item.isAvailable);
+    setEditingItemId(item._id);
+    setEditingItemCatId(catId);
+    setShowItemForm(true);
   }
 
   if (loading) return <div className="p-8"><p className="text-gray-500">Loading...</p></div>;
   if (!menu) return <div className="p-8"><p className="text-red-400">{error || 'Menu not found'}</p></div>;
-
-  const grouped = CATEGORIES.map((cat) => ({
-    ...cat,
-    items: menu.items.filter((i) => i.category === cat.value),
-  }));
 
   return (
     <div className="p-8">
@@ -160,7 +229,7 @@ export default function MenuEditorPage() {
         <div>
           <h1 className="text-3xl font-bold">{menu.name}</h1>
           {menu.description && <p className="mt-1 text-gray-400">{menu.description}</p>}
-          <p className="mt-1 text-xs text-gray-500">{menu.items.length} items &middot; /{menu.slug}</p>
+          <p className="mt-1 text-xs text-gray-500">{menu.categories.reduce((s, c) => s + c.items.length, 0)} items &middot; /{menu.slug}</p>
           {menu.isActive && (
             <p className="mt-1 text-xs text-green-400">
               Public: {typeof window !== 'undefined' ? window.location.origin : ''}/menu/{menu.slug}
@@ -192,114 +261,160 @@ export default function MenuEditorPage() {
 
       {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
 
-      {/* Item form */}
-      <form onSubmit={editingItemId ? handleUpdateItem : handleAddItem} className="mt-8 rounded-xl bg-white/10 p-6">
-        <h2 className="text-lg font-semibold">{editingItemId ? 'Edit Item' : 'Add Item'}</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-sm text-gray-400">Name</label>
-            <input
-              type="text"
-              required
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-              className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40"
-            />
+      {/* Category form */}
+      {showCatForm && (
+        <form onSubmit={editingCatId ? handleUpdateCategory : handleAddCategory} className="mt-6 rounded-xl bg-white/10 p-6">
+          <h2 className="text-lg font-semibold">{editingCatId ? 'Edit Category' : 'Add Category'}</h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="text-sm text-gray-400">Identifier</label>
+              <input type="text" required value={catId} onChange={(e) => setCatId(e.target.value)}
+                placeholder="e.g. proteinas"
+                className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+            </div>
+            <div>
+              <label className="text-sm text-gray-400">Label</label>
+              <input type="text" required value={catLabel} onChange={(e) => setCatLabel(e.target.value)}
+                placeholder="e.g. Proteína"
+                className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+            </div>
+            <div>
+              <label className="text-sm text-gray-400">Max items per plate</label>
+              <input type="number" required min="1" value={catMaxItems} onChange={(e) => setCatMaxItems(e.target.value)}
+                className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+            </div>
           </div>
-          <div>
-            <label className="text-sm text-gray-400">Category</label>
-            <select
-              value={itemCategory}
-              onChange={(e) => setItemCategory(e.target.value as Category)}
-              className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value} className="bg-gray-900">{c.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Description</label>
-            <input
-              type="text"
-              value={itemDescription}
-              onChange={(e) => setItemDescription(e.target.value)}
-              className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40"
-            />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Price ($)</label>
-            <input
-              type="number"
-              required
-              min="0"
-              step="0.01"
-              value={itemPrice}
-              onChange={(e) => setItemPrice(e.target.value)}
-              className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40"
-            />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400">Weight (g, optional)</label>
-            <input
-              type="number"
-              min="0"
-              value={itemWeight}
-              onChange={(e) => setItemWeight(e.target.value)}
-              className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40"
-            />
-          </div>
-        </div>
-        <div className="mt-4 flex gap-3">
-          <button
-            type="submit"
-            disabled={adding}
-            className="rounded-lg bg-white/20 px-6 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50"
-          >
-            {adding ? 'Saving...' : editingItemId ? 'Update Item' : 'Add Item'}
-          </button>
-          {editingItemId && (
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10"
-            >
-              Cancel
+          <div className="mt-4 flex gap-3">
+            <button type="submit" disabled={addingCat}
+              className="rounded-lg bg-white/20 px-6 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50">
+              {addingCat ? 'Saving...' : editingCatId ? 'Update Category' : 'Add Category'}
             </button>
-          )}
-        </div>
-      </form>
+            <button type="button" onClick={resetCatForm}
+              className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">Cancel</button>
+          </div>
+        </form>
+      )}
 
-      {/* Items grouped by category */}
-      <div className="mt-8 grid gap-6 sm:grid-cols-2">
-        {grouped.map((group) => (
-          <div key={group.value}>
-            <h3 className="text-lg font-semibold text-white/80">{group.label}</h3>
-            {group.items.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-500">No items</p>
-            ) : (
-              <ul className="mt-2 space-y-2">
-                {group.items.map((item) => (
-                  <li key={item._id} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">{item.name}</p>
-                      {item.description && (
-                        <p className="text-xs text-gray-500 truncate">{item.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 ml-4">
-                      {item.weight && <span className="text-xs text-gray-500">{item.weight}g</span>}
-                      <span className="text-sm font-medium">{formatPrice(item.price)}</span>
-                      <button onClick={() => startEdit(item)} className="text-xs text-gray-400 hover:text-white">Edit</button>
-                      <button onClick={() => handleDeleteItem(item._id)} className="text-xs text-red-400 hover:text-red-300">Del</button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+      {/* Categories */}
+      <div className="mt-8 space-y-8">
+        {menu.categories.length === 0 && !showCatForm && (
+          <div className="rounded-xl bg-white/5 p-8 text-center">
+            <p className="text-gray-500">No categories yet.</p>
+            <button onClick={() => setShowCatForm(true)} className="mt-3 text-sm text-blue-400 hover:text-blue-300">
+              + Add Category
+            </button>
+          </div>
+        )}
+        {!showCatForm && menu.categories.length > 0 && (
+          <button onClick={() => setShowCatForm(true)}
+            className="mb-4 rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20">
+            + Add Category
+          </button>
+        )}
+
+        {menu.categories.map((cat) => (
+          <div key={cat._id} className="rounded-xl bg-white/5 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">{cat.label}</h3>
+                <p className="text-xs text-gray-500">ID: {cat.id} &middot; Max {cat.maxItems} per plate &middot; {cat.items.length} items</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => startEditCategory(cat)} className="text-xs text-gray-400 hover:text-white">Edit</button>
+                <button onClick={() => handleDeleteCategory(cat._id)} className="text-xs text-red-400 hover:text-red-300">Del</button>
+              </div>
+            </div>
+
+            {/* Items */}
+            <div className="mt-4 space-y-2">
+              {cat.items.length === 0 && (
+                <p className="text-sm text-gray-500">No items in this category</p>
+              )}
+              {cat.items.map((item) => (
+                <div key={item._id} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{item.name}</p>
+                    {item.description && <p className="truncate text-xs text-gray-500">{item.description}</p>}
+                  </div>
+                  <div className="flex items-center gap-3 ml-4 shrink-0">
+                    {!item.isAvailable && <span className="text-xs text-red-400">Unavailable</span>}
+                    {item.portionGrams && <span className="text-xs text-gray-500">{item.portionGrams}{item.unit || 'gr'}</span>}
+                    <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
+                    <button onClick={() => startEditItem(cat._id, item)} className="text-xs text-gray-400 hover:text-white">Edit</button>
+                    <button onClick={() => handleDeleteItem(cat._id, item._id)} className="text-xs text-red-400 hover:text-red-300">Del</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add item button */}
+            <button
+              onClick={() => {
+                setItemCategoryId(cat._id);
+                setShowItemForm(true);
+              }}
+              className="mt-3 text-sm text-blue-400 hover:text-blue-300"
+            >
+              + Add Item
+            </button>
           </div>
         ))}
       </div>
+
+      {/* Item form modal */}
+      {showItemForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <form onSubmit={editingItemId ? handleUpdateItem : handleAddItem} className="w-full max-w-lg rounded-xl bg-gray-800 p-6 shadow-2xl ring-1 ring-white/20">
+            <h2 className="text-lg font-semibold">{editingItemId ? 'Edit Item' : 'Add Item'}</h2>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-400">Name</label>
+                <input type="text" required value={itemName} onChange={(e) => setItemName(e.target.value)}
+                  className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-400">Description</label>
+                <input type="text" value={itemDescription} onChange={(e) => setItemDescription(e.target.value)}
+                  className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400">Price per portion ($)</label>
+                <input type="number" required min="0" step="0.01" value={itemPrice} onChange={(e) => setItemPrice(e.target.value)}
+                  className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400">Portion (grams)</label>
+                <input type="number" min="0" value={itemPortionGrams} onChange={(e) => setItemPortionGrams(e.target.value)}
+                  className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400">Unit</label>
+                <select value={itemUnit} onChange={(e) => setItemUnit(e.target.value)}
+                  className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40">
+                  <option value="gr" className="bg-gray-900">gr</option>
+                  <option value="ml" className="bg-gray-900">ml</option>
+                  <option value="und" className="bg-gray-900">und</option>
+                </select>
+              </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 text-sm text-gray-400">
+                  <input type="checkbox" checked={itemAvailable} onChange={(e) => setItemAvailable(e.target.checked)}
+                    className="rounded bg-white/10" />
+                  Available
+                </label>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-3">
+              <button type="submit" disabled={addingItem}
+                className="rounded-lg bg-white/20 px-6 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50">
+                {addingItem ? 'Saving...' : editingItemId ? 'Update Item' : 'Add Item'}
+              </button>
+              <button type="button" onClick={resetItemForm}
+                className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

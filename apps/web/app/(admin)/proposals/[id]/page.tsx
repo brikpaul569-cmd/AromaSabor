@@ -6,14 +6,15 @@ import { api } from '@/lib/api';
 import PricingBreakdown from '@/components/PricingBreakdown';
 import QRCode from 'qrcode';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
 interface ProposalItem {
   _id: string;
   name: string;
   description: string;
-  category: Category;
-  price: number;
+  categoryId: string;
+  categoryLabel: string;
+  pricePerPortion: number;
+  portionGrams?: number;
+  unit: string;
   quantity: number;
 }
 
@@ -26,6 +27,11 @@ interface AdminRef {
   _id: string;
   name: string;
   email: string;
+}
+
+interface MenuCategory {
+  id: string;
+  label: string;
 }
 
 interface Proposal {
@@ -43,6 +49,7 @@ interface Proposal {
   createdAt: string;
   expiresAt: string;
   viewedAt?: string;
+  menu?: { categories: MenuCategory[] };
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -71,19 +78,14 @@ function formatPrice(price: number): string {
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    year: 'numeric', month: 'long', day: 'numeric',
   });
 }
 
 function formatDateTime(date: string): string {
   return new Date(date).toLocaleString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
   });
 }
 
@@ -163,10 +165,7 @@ export default function ProposalDetailPage() {
     return (
       <div className="p-8">
         <h1 className="text-2xl font-bold text-white/60">Proposal not found</h1>
-        <button
-          onClick={() => router.push('/proposals')}
-          className="mt-4 text-sm text-gray-500 hover:text-white"
-        >
+        <button onClick={() => router.push('/proposals')} className="mt-4 text-sm text-gray-500 hover:text-white">
           Back to proposals
         </button>
       </div>
@@ -180,9 +179,10 @@ export default function ProposalDetailPage() {
   const clientViewed = !!proposal.viewedAt;
   const isActive = proposal.status === 'enviado' && clientViewed;
 
+  const uniqueCategories = [...new Map(proposal.items.map((i) => [i.categoryId, { id: i.categoryId, label: i.categoryLabel }])).values()];
+
   return (
     <div className="mx-auto max-w-3xl p-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{proposal.clientName}</h1>
@@ -192,25 +192,20 @@ export default function ProposalDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           {isActive && (
-            <span className="rounded-full bg-green-500/20 px-4 py-1.5 text-sm font-medium text-green-300">
-              Active
-            </span>
+            <span className="rounded-full bg-green-500/20 px-4 py-1.5 text-sm font-medium text-green-300">Active</span>
           )}
           <span className={`rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
             {STATUS_LABELS[proposal.status] || proposal.status}
           </span>
           {canSend && (
-            <button
-              onClick={() => setShowConfirm(true)}
-              className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-            >
+            <button onClick={() => setShowConfirm(true)}
+              className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700">
               Send to Client
             </button>
           )}
         </div>
       </div>
 
-      {/* Send error */}
       {sendError && (
         <div className="mt-4 rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {sendError}
@@ -218,7 +213,6 @@ export default function ProposalDetailPage() {
         </div>
       )}
 
-      {/* Public URL + QR for sent proposals */}
       {isSentOrExpired && (
         <div className="mt-4 rounded-lg bg-blue-500/10 px-4 py-3">
           <div className="flex items-start gap-4">
@@ -226,10 +220,8 @@ export default function ProposalDetailPage() {
               <p className="text-xs text-blue-400">Public URL</p>
               <div className="mt-1 flex items-center gap-2">
                 <code className="flex-1 truncate text-sm text-blue-200">{publicUrl}</code>
-                <button
-                  onClick={handleCopyLink}
-                  className="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
-                >
+                <button onClick={handleCopyLink}
+                  className="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
@@ -243,7 +235,6 @@ export default function ProposalDetailPage() {
         </div>
       )}
 
-      {/* Info cards */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg bg-white/5 px-4 py-3">
           <p className="text-xs text-gray-500">Menu</p>
@@ -266,13 +257,16 @@ export default function ProposalDetailPage() {
         </div>
       )}
 
-      {/* Items + Pricing */}
       {proposal.items.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-4 text-lg font-semibold text-white/80">Items</h2>
           <div className={`flex flex-wrap gap-8 ${isSentOrExpired || isTerminal ? 'opacity-70' : ''}`}>
             <div className="flex-1 min-w-[280px]">
-              <PricingBreakdown items={proposal.items} guestCount={proposal.guestCount} />
+              <PricingBreakdown
+                items={proposal.items.map((i) => ({ _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel }))}
+                guestCount={proposal.guestCount}
+                categories={uniqueCategories}
+              />
             </div>
             <div className="flex-1 min-w-[200px] space-y-2">
               {proposal.items.map((item) => (
@@ -286,7 +280,6 @@ export default function ProposalDetailPage() {
         </div>
       )}
 
-      {/* Metadata */}
       <div className="mt-8 rounded-lg bg-white/5 px-4 py-3 text-xs text-gray-500">
         <p>ID: {proposal._id}</p>
         {isSentOrExpired && <p className="mt-1">Token: {proposal.token}</p>}
@@ -300,13 +293,10 @@ export default function ProposalDetailPage() {
           </p>
         )}
         {proposal.viewedAt && (
-          <p className="mt-1">
-            Viewed by client: {formatDateTime(proposal.viewedAt)}
-          </p>
+          <p className="mt-1">Viewed by client: {formatDateTime(proposal.viewedAt)}</p>
         )}
       </div>
 
-      {/* Confirmation dialog */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="w-full max-w-sm rounded-lg bg-gray-900 p-6 shadow-xl">
@@ -315,18 +305,12 @@ export default function ProposalDetailPage() {
               This will set a 20-minute expiration timer. The client will receive a unique URL to view the proposal.
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => { setShowConfirm(false); setSendError(null); }}
-                className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-white"
-                disabled={sending}
-              >
+              <button onClick={() => { setShowConfirm(false); setSendError(null); }}
+                className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-white" disabled={sending}>
                 Cancel
               </button>
-              <button
-                onClick={handleSend}
-                disabled={sending}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
+              <button onClick={handleSend} disabled={sending}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
                 {sending ? 'Sending...' : 'Send'}
               </button>
             </div>

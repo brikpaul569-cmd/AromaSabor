@@ -1,55 +1,78 @@
 import { create } from 'zustand';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
-interface PlateItem {
+export interface CategoryItem {
   _id: string;
   name: string;
-  description: string;
-  category: Category;
-  price: number;
-  weight?: number;
+  description?: string;
+  portionGrams?: number;
+  pricePerPortion: number;
+  unit: string;
+  isAvailable: boolean;
+}
+
+export interface CategoryInfo {
+  _id: string;
+  id: string;
+  label: string;
+  maxItems: number;
 }
 
 interface PlateStore {
-  selections: Record<Category, PlateItem | null>;
+  selections: Record<string, CategoryItem[]>;
   guestCount: number;
-  selectItem: (item: PlateItem) => void;
-  deselectItem: (category: Category) => void;
+  initCategories: (categories: CategoryInfo[]) => void;
+  selectItem: (categoryId: string, item: CategoryItem, maxItems: number) => void;
+  deselectItem: (categoryId: string, itemId: string) => void;
   clearAll: () => void;
   setGuestCount: (count: number) => void;
-  selectedItems: () => PlateItem[];
-  isSelected: (item: PlateItem) => boolean;
+  selectedItems: () => (CategoryItem & { categoryId: string })[];
+  isSelected: (categoryId: string, itemId: string) => boolean;
+  getSelectionCount: (categoryId: string) => number;
 }
 
 export const usePlateStore = create<PlateStore>((set, get) => ({
-  selections: {
-    entrada: null,
-    plato_fuerte: null,
-    guarnicion: null,
-    postre: null,
-  },
+  selections: {},
   guestCount: 1,
 
-  selectItem: (item) =>
-    set((state) => ({
-      selections: { ...state.selections, [item.category]: item },
-    })),
+  initCategories: (categories) => {
+    const existing = get().selections;
+    const updates: Record<string, CategoryItem[]> = {};
+    for (const cat of categories) {
+      if (!(cat._id in existing)) {
+        updates[cat._id] = [];
+      }
+    }
+    if (Object.keys(updates).length > 0) {
+      set((state) => ({ selections: { ...state.selections, ...updates } }));
+    }
+  },
 
-  deselectItem: (category) =>
-    set((state) => ({
-      selections: { ...state.selections, [category]: null },
-    })),
-
-  clearAll: () =>
-    set({
-      selections: {
-        entrada: null,
-        plato_fuerte: null,
-        guarnicion: null,
-        postre: null,
-      },
+  selectItem: (categoryId, item, maxItems) =>
+    set((state) => {
+      const current = state.selections[categoryId] || [];
+      if (current.some((s) => s._id === item._id)) return state;
+      if (current.length >= maxItems) return state;
+      return {
+        selections: { ...state.selections, [categoryId]: [...current, item] },
+      };
     }),
+
+  deselectItem: (categoryId, itemId) =>
+    set((state) => ({
+      selections: {
+        ...state.selections,
+        [categoryId]: (state.selections[categoryId] || []).filter((s) => s._id !== itemId),
+      },
+    })),
+
+  clearAll: () => {
+    const { selections } = get();
+    const cleared: Record<string, CategoryItem[]> = {};
+    for (const key of Object.keys(selections)) {
+      cleared[key] = [];
+    }
+    set({ selections: cleared });
+  },
 
   setGuestCount: (count) => {
     const sanitized = isNaN(count) || count < 1 ? 1 : Math.floor(count);
@@ -58,11 +81,21 @@ export const usePlateStore = create<PlateStore>((set, get) => ({
 
   selectedItems: () => {
     const { selections } = get();
-    return Object.values(selections).filter((s): s is PlateItem => s !== null);
+    const result: (CategoryItem & { categoryId: string })[] = [];
+    for (const [catId, items] of Object.entries(selections)) {
+      for (const item of items) {
+        result.push({ ...item, categoryId: catId });
+      }
+    }
+    return result;
   },
 
-  isSelected: (item) => {
+  isSelected: (categoryId, itemId) => {
     const { selections } = get();
-    return selections[item.category]?._id === item._id;
+    return (selections[categoryId] || []).some((s) => s._id === itemId);
+  },
+
+  getSelectionCount: (categoryId) => {
+    return (get().selections[categoryId] || []).length;
   },
 }));

@@ -1,18 +1,17 @@
 'use client';
 
-type Category = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
-
-interface MenuItem {
+export interface PopoverItem {
   _id: string;
   name: string;
-  description: string;
-  category: Category;
-  price: number;
-  weight?: number;
+  description?: string;
+  portionGrams?: number;
+  pricePerPortion: number;
+  unit: string;
+  categoryId: string;
 }
 
 interface PlateItemPopoverProps {
-  item: MenuItem;
+  item: PopoverItem;
   canReplace: boolean;
   onRemove: () => void;
   onReplace: () => void;
