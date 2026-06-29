@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, Query } from '@nestjs/common';
 import { ProposalsService } from './proposals.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -21,9 +21,36 @@ export class ProposalsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Patch(':id/approve')
+  approve(@Param('id') id: string) {
+    return this.proposalsService.approve(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/reject')
+  reject(@Param('id') id: string) {
+    return this.proposalsService.reject(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  transitionStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string; modifiedBy: 'chef' | 'cliente'; reason?: string },
+  ) {
+    return this.proposalsService.transitionStatus(id, body.status, body.modifiedBy, body.reason);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('id/:id')
   findById(@Param('id') id: string) {
     return this.proposalsService.findById(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('id/:id/history')
+  getHistory(@Param('id') id: string) {
+    return this.proposalsService.getHistory(id);
   }
 
   @Get(':token')
@@ -33,7 +60,7 @@ export class ProposalsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
+  findAll(@Query('status') status?: string) {
     return this.proposalsService.findAll();
   }
 

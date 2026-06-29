@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MenusModule } from '../modules/menus/menus.module';
+import { ProposalsModule } from '../modules/proposals/proposals.module';
+import { NotificationsModule } from '../modules/notifications/notifications.module';
 import { Admin, AdminSchema } from '../schemas/admin.schema';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { MockJwtAuthGuard } from './mock-auth-guard';
@@ -25,6 +27,8 @@ export async function createTestApp(overrides?: {
       }),
       MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
       MenusModule,
+      NotificationsModule,
+      ProposalsModule,
       ...(overrides?.imports || []),
     ],
     providers: [...(overrides?.providers || [])],

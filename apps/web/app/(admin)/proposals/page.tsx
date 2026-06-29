@@ -1,17 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-
-interface ProposalItem {
-  _id: string;
-  name: string;
-  description: string;
-  category: string;
-  price: number;
-  quantity: number;
-}
+import { useTranslation } from '@/lib/i18n';
 
 interface Proposal {
   _id: string;
@@ -21,19 +13,10 @@ interface Proposal {
   guestCount: number;
   status: string;
   quotation: number;
+  totalPrice?: number;
   createdAt: string;
-  items: ProposalItem[];
+  items: { _id: string; name: string }[];
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  borrador: 'Draft',
-  enviado: 'Sent',
-  modificado_por_cliente: 'Modified by client',
-  modificado_por_chef: 'Modified by chef',
-  aceptado: 'Approved',
-  rechazado: 'Rejected',
-  expirado: 'Expired',
-};
 
 const STATUS_COLORS: Record<string, string> = {
   borrador: 'bg-gray-500/20 text-gray-300',
@@ -45,21 +28,23 @@ const STATUS_COLORS: Record<string, string> = {
   expirado: 'bg-red-500/10 text-red-400',
 };
 
+const FILTER_OPTIONS = ['all', 'borrador', 'enviado', 'modificado_por_cliente', 'modificado_por_chef', 'aceptado', 'rechazado', 'expirado'] as const;
+
 function formatPrice(price: number): string {
   return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: 'numeric', month: 'short', day: 'numeric',
   });
 }
 
 export default function ProposalsPage() {
+  const { t } = useTranslation();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
     api.get<Proposal[]>('/proposals')
@@ -68,27 +53,62 @@ export default function ProposalsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const filtered = filter === 'all' ? proposals : proposals.filter((p) => p.status === filter);
+
+  const monthlyTotal = useMemo(() => {
+    const now = new Date();
+    return proposals
+      .filter((p) => {
+        const d = new Date(p.createdAt);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && p.status === 'aceptado';
+      })
+      .reduce((sum, p) => sum + (p.totalPrice || p.quotation), 0);
+  }, [proposals]);
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Proposals</h1>
+        <h1 className="text-3xl font-bold">{t('proposals.title')}</h1>
         <Link
           href="/proposals/new"
           className="rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
         >
-          New Proposal
+          {t('proposals.new')}
         </Link>
       </div>
 
+      {monthlyTotal > 0 && (
+        <div className="mt-4 rounded-lg bg-green-500/10 px-4 py-3">
+          <p className="text-xs text-green-400">{t('proposals.approvedThisMonth')}</p>
+          <p className="text-lg font-semibold text-green-300">{formatPrice(monthlyTotal)}</p>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {FILTER_OPTIONS.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              filter === f
+                ? 'bg-white/20 text-white'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}
+          >
+            {f === 'all' ? t('proposals.filterAll') : t('status.' + f)}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
-        <p className="mt-8 text-gray-500">Loading...</p>
-      ) : proposals.length === 0 ? (
+        <p className="mt-8 text-gray-500">{t('common.loading')}</p>
+      ) : filtered.length === 0 ? (
         <div className="mt-8 rounded-xl bg-white/5 p-8 text-center">
-          <p className="text-gray-500">No proposals yet. Create your first one.</p>
+          <p className="text-gray-500">{t('proposals.noMatch')}</p>
         </div>
       ) : (
-        <div className="mt-8 space-y-3">
-          {proposals.map((p) => (
+        <div className="mt-4 space-y-3">
+          {filtered.map((p) => (
             <Link
               key={p._id}
               href={`/proposals/${p._id}`}
@@ -103,7 +123,7 @@ export default function ProposalsPage() {
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-400">{formatPrice(p.quotation)}</span>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || 'bg-gray-500/20 text-gray-300'}`}>
-                  {STATUS_LABELS[p.status] || p.status}
+                  {t('status.' + p.status)}
                 </span>
               </div>
             </Link>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, ApiClientError } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 
 interface AdminUser {
   _id: string;
@@ -23,16 +24,9 @@ function formatPrice(price: number): string {
   return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  borrador: 'Draft',
-  enviado: 'Sent',
-  aceptado: 'Approved',
-  rechazado: 'Rejected',
-  expirado: 'Expired',
-};
-
 export default function DashboardPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +53,7 @@ export default function DashboardPage() {
     router.push('/login');
   }
 
-  if (loading) return <div className="p-8"><p className="text-gray-500">Loading...</p></div>;
+  if (loading) return <div className="p-8"><p className="text-gray-500">{t('common.loading')}</p></div>;
 
   const totalProposals = proposals.length;
   const sentCount = proposals.filter((p) => p.status === 'enviado').length;
@@ -70,14 +64,14 @@ export default function DashboardPage() {
     <div className="p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          {admin && <p className="mt-1 text-gray-400">Welcome, {admin.name}</p>}
+          <h1 className="text-3xl font-bold">{t('dashboard.title')}</h1>
+          {admin && <p className="mt-1 text-gray-400">{t('dashboard.welcome', { name: admin.name })}</p>}
         </div>
         <button
           onClick={handleLogout}
           className="rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
         >
-          Logout
+          {t('auth.logout')}
         </button>
       </div>
 
@@ -85,33 +79,33 @@ export default function DashboardPage() {
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Link href="/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
           <p className="text-3xl font-bold">{totalProposals}</p>
-          <p className="mt-1 text-sm text-gray-500">Total proposals</p>
+          <p className="mt-1 text-sm text-gray-500">{t('dashboard.totalProposals')}</p>
         </Link>
         <Link href="/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
           <p className="text-3xl font-bold text-blue-300">{sentCount}</p>
-          <p className="mt-1 text-sm text-gray-500">Sent</p>
+          <p className="mt-1 text-sm text-gray-500">{t('dashboard.sent')}</p>
         </Link>
         <Link href="/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
           <p className="text-3xl font-bold text-gray-300">{draftCount}</p>
-          <p className="mt-1 text-sm text-gray-500">Drafts</p>
+          <p className="mt-1 text-sm text-gray-500">{t('dashboard.drafts')}</p>
         </Link>
       </div>
 
       {/* Recent proposals */}
       <div className="mt-12">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white/80">Recent proposals</h2>
-          <Link href="/proposals" className="text-sm text-gray-500 hover:text-white">View all</Link>
+          <h2 className="text-lg font-semibold text-white/80">{t('dashboard.recentProposals')}</h2>
+          <Link href="/proposals" className="text-sm text-gray-500 hover:text-white">{t('common.viewAll')}</Link>
         </div>
 
         {recent.length === 0 ? (
           <div className="mt-4 rounded-xl bg-white/5 p-8 text-center">
-            <p className="text-gray-500">No proposals yet.</p>
+            <p className="text-gray-500">{t('dashboard.noProposals')}</p>
             <Link
               href="/proposals/new"
               className="mt-2 inline-block text-sm text-blue-400 hover:text-blue-300"
             >
-              Create your first proposal
+              {t('dashboard.createFirst')}
             </Link>
           </div>
         ) : (
@@ -126,7 +120,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-gray-400">{formatPrice(p.quotation)}</span>
                   <span className="text-xs text-gray-500">
-                    {STATUS_LABELS[p.status] || p.status}
+                    {t('status.' + p.status)}
                   </span>
                 </div>
               </Link>

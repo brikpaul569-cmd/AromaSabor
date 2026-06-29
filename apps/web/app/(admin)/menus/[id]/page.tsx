@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ApiClientError } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 
 interface MenuCategoryItem {
   _id: string;
@@ -39,6 +40,7 @@ function formatPrice(price: number): string {
 export default function MenuEditorPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useTranslation();
   const id = params.id as string;
 
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -216,23 +218,23 @@ export default function MenuEditorPage() {
     setShowItemForm(true);
   }
 
-  if (loading) return <div className="p-8"><p className="text-gray-500">Loading...</p></div>;
-  if (!menu) return <div className="p-8"><p className="text-red-400">{error || 'Menu not found'}</p></div>;
+  if (loading) return <div className="p-8"><p className="text-gray-500">{t('common.loading')}</p></div>;
+  if (!menu) return <div className="p-8"><p className="text-red-400">{error || t('public.menu.notFound')}</p></div>;
 
   return (
     <div className="p-8">
       <div className="flex items-center gap-4">
-        <button onClick={() => router.push('/menus')} className="text-sm text-gray-400 hover:text-white">&larr; Back</button>
+        <button onClick={() => router.push('/menus')} className="text-sm text-gray-400 hover:text-white">&larr; {t('common.back')}</button>
       </div>
 
       <div className="mt-4 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">{menu.name}</h1>
           {menu.description && <p className="mt-1 text-gray-400">{menu.description}</p>}
-          <p className="mt-1 text-xs text-gray-500">{menu.categories.reduce((s, c) => s + c.items.length, 0)} items &middot; /{menu.slug}</p>
+          <p className="mt-1 text-xs text-gray-500">{menu.categories.reduce((s, c) => s + c.items.length, 0)} {t('menus.editor.items')} &middot; /{menu.slug}</p>
           {menu.isActive && (
             <p className="mt-1 text-xs text-green-400">
-              Public: {typeof window !== 'undefined' ? window.location.origin : ''}/menu/{menu.slug}
+              {t('menus.editor.publicUrl')}: {typeof window !== 'undefined' ? window.location.origin : ''}/menu/{menu.slug}
             </p>
           )}
         </div>
@@ -255,7 +257,7 @@ export default function MenuEditorPage() {
               : 'bg-green-500/20 text-green-300 hover:bg-green-500/30'
           }`}
         >
-          {publishing ? '...' : menu.isActive ? 'Unpublish' : 'Publish'}
+          {publishing ? '...' : menu.isActive ? t('menus.editor.unpublish') : t('menus.editor.publish')}
         </button>
       </div>
 
@@ -264,22 +266,22 @@ export default function MenuEditorPage() {
       {/* Category form */}
       {showCatForm && (
         <form onSubmit={editingCatId ? handleUpdateCategory : handleAddCategory} className="mt-6 rounded-xl bg-white/10 p-6">
-          <h2 className="text-lg font-semibold">{editingCatId ? 'Edit Category' : 'Add Category'}</h2>
+          <h2 className="text-lg font-semibold">{editingCatId ? 'Edit Category' : t('menus.editor.addCategory')}</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="text-sm text-gray-400">Identifier</label>
+              <label className="text-sm text-gray-400">{t('menus.editor.slug')}</label>
               <input type="text" required value={catId} onChange={(e) => setCatId(e.target.value)}
                 placeholder="e.g. proteinas"
                 className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
             </div>
             <div>
-              <label className="text-sm text-gray-400">Label</label>
+              <label className="text-sm text-gray-400">{t('menus.editor.categoryLabel')}</label>
               <input type="text" required value={catLabel} onChange={(e) => setCatLabel(e.target.value)}
                 placeholder="e.g. Proteína"
                 className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
             </div>
             <div>
-              <label className="text-sm text-gray-400">Max items per plate</label>
+              <label className="text-sm text-gray-400">{t('menus.editor.maxItems')}</label>
               <input type="number" required min="1" value={catMaxItems} onChange={(e) => setCatMaxItems(e.target.value)}
                 className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
             </div>
@@ -287,10 +289,10 @@ export default function MenuEditorPage() {
           <div className="mt-4 flex gap-3">
             <button type="submit" disabled={addingCat}
               className="rounded-lg bg-white/20 px-6 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50">
-              {addingCat ? 'Saving...' : editingCatId ? 'Update Category' : 'Add Category'}
+              {addingCat ? 'Saving...' : editingCatId ? t('common.save') : t('menus.editor.addCategory')}
             </button>
             <button type="button" onClick={resetCatForm}
-              className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">Cancel</button>
+              className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">{t('common.cancel')}</button>
           </div>
         </form>
       )}
@@ -299,16 +301,16 @@ export default function MenuEditorPage() {
       <div className="mt-8 space-y-8">
         {menu.categories.length === 0 && !showCatForm && (
           <div className="rounded-xl bg-white/5 p-8 text-center">
-            <p className="text-gray-500">No categories yet.</p>
+            <p className="text-gray-500">{t('menus.editor.noCategories')}</p>
             <button onClick={() => setShowCatForm(true)} className="mt-3 text-sm text-blue-400 hover:text-blue-300">
-              + Add Category
+              + {t('menus.editor.addCategory')}
             </button>
           </div>
         )}
         {!showCatForm && menu.categories.length > 0 && (
           <button onClick={() => setShowCatForm(true)}
             className="mb-4 rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20">
-            + Add Category
+            + {t('menus.editor.addCategory')}
           </button>
         )}
 
@@ -317,18 +319,18 @@ export default function MenuEditorPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold">{cat.label}</h3>
-                <p className="text-xs text-gray-500">ID: {cat.id} &middot; Max {cat.maxItems} per plate &middot; {cat.items.length} items</p>
+                <p className="text-xs text-gray-500">{t('menus.editor.slug')}: {cat.id} &middot; {t('menus.editor.maxItems')} {cat.maxItems} &middot; {cat.items.length} {t('menus.editor.items')}</p>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => startEditCategory(cat)} className="text-xs text-gray-400 hover:text-white">Edit</button>
-                <button onClick={() => handleDeleteCategory(cat._id)} className="text-xs text-red-400 hover:text-red-300">Del</button>
+                <button onClick={() => startEditCategory(cat)} className="text-xs text-gray-400 hover:text-white">{t('menus.editor.edit')}</button>
+                <button onClick={() => handleDeleteCategory(cat._id)} className="text-xs text-red-400 hover:text-red-300">{t('menus.editor.delete')}</button>
               </div>
             </div>
 
             {/* Items */}
             <div className="mt-4 space-y-2">
               {cat.items.length === 0 && (
-                <p className="text-sm text-gray-500">No items in this category</p>
+                <p className="text-sm text-gray-500">{t('menus.editor.noItems')}</p>
               )}
               {cat.items.map((item) => (
                 <div key={item._id} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
@@ -340,8 +342,8 @@ export default function MenuEditorPage() {
                     {!item.isAvailable && <span className="text-xs text-red-400">Unavailable</span>}
                     {item.portionGrams && <span className="text-xs text-gray-500">{item.portionGrams}{item.unit || 'gr'}</span>}
                     <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
-                    <button onClick={() => startEditItem(cat._id, item)} className="text-xs text-gray-400 hover:text-white">Edit</button>
-                    <button onClick={() => handleDeleteItem(cat._id, item._id)} className="text-xs text-red-400 hover:text-red-300">Del</button>
+                    <button onClick={() => startEditItem(cat._id, item)} className="text-xs text-gray-400 hover:text-white">{t('menus.editor.edit')}</button>
+                    <button onClick={() => handleDeleteItem(cat._id, item._id)} className="text-xs text-red-400 hover:text-red-300">{t('menus.editor.delete')}</button>
                   </div>
                 </div>
               ))}
@@ -355,7 +357,7 @@ export default function MenuEditorPage() {
               }}
               className="mt-3 text-sm text-blue-400 hover:text-blue-300"
             >
-              + Add Item
+              + {t('menus.editor.addItem')}
             </button>
           </div>
         ))}
@@ -365,25 +367,25 @@ export default function MenuEditorPage() {
       {showItemForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <form onSubmit={editingItemId ? handleUpdateItem : handleAddItem} className="w-full max-w-lg rounded-xl bg-gray-800 p-6 shadow-2xl ring-1 ring-white/20">
-            <h2 className="text-lg font-semibold">{editingItemId ? 'Edit Item' : 'Add Item'}</h2>
+            <h2 className="text-lg font-semibold">{editingItemId ? t('menus.editor.edit') + ' ' + t('menus.editor.itemName') : t('menus.editor.addItem')}</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="text-sm text-gray-400">Name</label>
+                <label className="text-sm text-gray-400">{t('menus.editor.itemName')}</label>
                 <input type="text" required value={itemName} onChange={(e) => setItemName(e.target.value)}
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-sm text-gray-400">Description</label>
+                <label className="text-sm text-gray-400">{t('menus.editor.itemDescription')}</label>
                 <input type="text" value={itemDescription} onChange={(e) => setItemDescription(e.target.value)}
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
               </div>
               <div>
-                <label className="text-sm text-gray-400">Price per portion ($)</label>
+                <label className="text-sm text-gray-400">{t('menus.editor.itemPrice')}</label>
                 <input type="number" required min="0" step="0.01" value={itemPrice} onChange={(e) => setItemPrice(e.target.value)}
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
               </div>
               <div>
-                <label className="text-sm text-gray-400">Portion (grams)</label>
+                <label className="text-sm text-gray-400">{t('menus.editor.itemWeight')}</label>
                 <input type="number" min="0" value={itemPortionGrams} onChange={(e) => setItemPortionGrams(e.target.value)}
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
               </div>
@@ -407,10 +409,10 @@ export default function MenuEditorPage() {
             <div className="mt-4 flex gap-3">
               <button type="submit" disabled={addingItem}
                 className="rounded-lg bg-white/20 px-6 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50">
-                {addingItem ? 'Saving...' : editingItemId ? 'Update Item' : 'Add Item'}
+                {addingItem ? 'Saving...' : editingItemId ? t('common.save') : t('menus.editor.addItem')}
               </button>
               <button type="button" onClick={resetItemForm}
-                className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">Cancel</button>
+                className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">{t('common.cancel')}</button>
             </div>
           </form>
         </div>

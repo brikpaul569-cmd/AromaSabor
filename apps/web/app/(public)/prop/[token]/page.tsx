@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
 
 interface ProposalItem {
@@ -37,16 +38,6 @@ interface Proposal {
   viewedAt?: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  borrador: 'Draft',
-  enviado: 'Active',
-  modificado_por_cliente: 'Modified by client',
-  modificado_por_chef: 'Modified by chef',
-  aceptado: 'Approved',
-  rechazado: 'Rejected',
-  expirado: 'Expired',
-};
-
 const STATUS_STYLES: Record<string, string> = {
   borrador: 'bg-gray-500/20 text-gray-300',
   enviado: 'bg-green-500/20 text-green-300',
@@ -69,6 +60,7 @@ function formatDate(date: string): string {
 
 export default function PublicProposalPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const token = params.token as string;
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -89,7 +81,7 @@ export default function PublicProposalPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-        <p className="text-gray-500">Loading proposal...</p>
+        <p className="text-gray-500">{t('public.proposal.loading')}</p>
       </div>
     );
   }
@@ -97,8 +89,8 @@ export default function PublicProposalPage() {
   if (notFound) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-8">
-        <h1 className="text-2xl font-bold text-white/60">Proposal not found</h1>
-        <p className="mt-2 text-sm text-gray-500">The link may be invalid or expired.</p>
+        <h1 className="text-2xl font-bold text-white/60">{t('public.proposal.notFound')}</h1>
+        <p className="mt-2 text-sm text-gray-500">{t('public.proposal.notFoundDesc')}</p>
       </div>
     );
   }
@@ -106,7 +98,7 @@ export default function PublicProposalPage() {
   if (error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-8">
-        <h1 className="text-2xl font-bold text-red-400">Something went wrong</h1>
+        <h1 className="text-2xl font-bold text-red-400">{t('common.error')}</h1>
         <p className="mt-2 text-sm text-gray-500">{error}</p>
       </div>
     );
@@ -123,14 +115,14 @@ export default function PublicProposalPage() {
       <div className="mx-auto max-w-3xl p-8">
         {isExpired && (
           <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 px-5 py-4 text-center">
-            <p className="text-lg font-semibold text-red-300">This proposal has expired</p>
-            <p className="mt-1 text-sm text-red-400/80">The 20-minute window to review this proposal has passed. Please contact the chef for an updated version.</p>
+            <p className="text-lg font-semibold text-red-300">{t('public.proposal.expired')}</p>
+            <p className="mt-1 text-sm text-red-400/80">{t('public.proposal.expiredDesc')}</p>
           </div>
         )}
 
         {isActive && (
           <div className="mb-6 rounded-lg border border-green-500/20 bg-green-500/10 px-5 py-4 text-center">
-            <p className="text-sm text-green-300">This proposal is active and ready for your review.</p>
+            <p className="text-sm text-green-300">{t('public.proposal.active')}</p>
           </div>
         )}
 
@@ -140,35 +132,35 @@ export default function PublicProposalPage() {
             <p className="mt-1 text-sm text-gray-500">{formatDate(proposal.eventDate)}</p>
           </div>
           <span className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
-            {STATUS_LABELS[proposal.status] || proposal.status}
+            {t('status.' + proposal.status)}
           </span>
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">Menu</p>
+            <p className="text-xs text-gray-500">{t('public.proposal.menu')}</p>
             <p className="mt-1 text-sm font-medium text-white/80">{proposal.menuId?.name || '—'}</p>
           </div>
           <div className="rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">Guests</p>
+            <p className="text-xs text-gray-500">{t('public.proposal.guests')}</p>
             <p className="mt-1 text-sm font-medium text-white/80">{proposal.guestCount}</p>
           </div>
           <div className="rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">Total</p>
+            <p className="text-xs text-gray-500">{t('public.proposal.total')}</p>
             <p className="mt-1 text-sm font-medium text-white/80">{formatPrice(proposal.quotation)}</p>
           </div>
         </div>
 
         {proposal.notes && (
           <div className="mt-4 rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">Notes</p>
+            <p className="text-xs text-gray-500">{t('public.proposal.notes')}</p>
             <p className="mt-1 text-sm text-gray-300">{proposal.notes}</p>
           </div>
         )}
 
         {proposal.items.length > 0 && (
           <div className="mt-8">
-            <h2 className="mb-4 text-lg font-semibold text-white/80">Menu Items</h2>
+            <h2 className="mb-4 text-lg font-semibold text-white/80">{t('public.proposal.menuItems')}</h2>
             <div className="flex flex-wrap gap-8">
               <div className="flex-1 min-w-[280px]">
                 <PricingBreakdown
@@ -190,7 +182,7 @@ export default function PublicProposalPage() {
         )}
 
         <div className="mt-8 border-t border-white/5 pt-4 text-center text-xs text-gray-600">
-          <p>AromaSabor — Proposal</p>
+          <p>{t('app.footer')}</p>
         </div>
       </div>
     </div>

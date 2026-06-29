@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, ApiClientError } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -26,7 +28,7 @@ export default function LoginPage() {
       }
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Something went wrong');
+      setError(err instanceof ApiClientError ? err.message : t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -36,12 +38,12 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-sm rounded-xl bg-white/10 p-8 backdrop-blur-lg">
         <h1 className="mb-6 text-2xl font-bold">
-          {mode === 'login' ? 'Admin Login' : 'Admin Register'}
+          {mode === 'login' ? t('auth.login') : t('auth.register')}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="text-sm text-gray-400">Email</label>
+            <label htmlFor="email" className="text-sm text-gray-400">{t('auth.email')}</label>
             <input
               id="email"
               type="email"
@@ -54,7 +56,7 @@ export default function LoginPage() {
 
           {mode === 'register' && (
             <div>
-              <label htmlFor="name" className="text-sm text-gray-400">Name</label>
+              <label htmlFor="name" className="text-sm text-gray-400">{t('auth.name')}</label>
               <input
                 id="name"
                 type="text"
@@ -67,7 +69,7 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="password" className="text-sm text-gray-400">Password</label>
+            <label htmlFor="password" className="text-sm text-gray-400">{t('auth.password')}</label>
             <input
               id="password"
               type="password"
@@ -86,23 +88,23 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-white/20 px-4 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50"
           >
-            {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+            {loading ? t('auth.pleaseWait') : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
           {mode === 'login' ? (
             <>
-              No account?{' '}
+              {t('auth.noAccount')}{' '}
               <button onClick={() => setMode('register')} className="text-white underline">
-                Register
+                {t('auth.registerLink')}
               </button>
             </>
           ) : (
             <>
-              Already have an account?{' '}
+              {t('auth.hasAccount')}{' '}
               <button onClick={() => setMode('login')} className="text-white underline">
-                Sign In
+                {t('auth.loginLink')}
               </button>
             </>
           )}

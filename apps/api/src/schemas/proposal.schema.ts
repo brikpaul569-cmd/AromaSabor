@@ -3,8 +3,18 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type ProposalDocument = HydratedDocument<Proposal>;
 
+export const VALID_TRANSITIONS: Record<string, string[]> = {
+  borrador: ['enviado'],
+  enviado: ['modificado_por_cliente', 'modificado_por_chef', 'aceptado', 'rechazado', 'expirado'],
+  modificado_por_cliente: ['modificado_por_chef', 'aceptado', 'rechazado', 'expirado'],
+  modificado_por_chef: ['modificado_por_cliente', 'aceptado', 'rechazado', 'expirado'],
+  aceptado: [],
+  rechazado: [],
+  expirado: [],
+};
+
 @Schema()
-class ProposalItem {
+export class ProposalItem {
   @Prop({ required: true })
   name!: string;
 
@@ -33,6 +43,20 @@ class ProposalItem {
 const ProposalItemSchema = SchemaFactory.createForClass(ProposalItem);
 
 @Schema()
+class ClientInfo {
+  @Prop()
+  phone?: string;
+
+  @Prop()
+  email?: string;
+
+  @Prop()
+  eventType?: string;
+}
+
+const ClientInfoSchema = SchemaFactory.createForClass(ClientInfo);
+
+@Schema()
 class EditHistoryEntry {
   @Prop({ required: true, enum: ['chef', 'cliente'] })
   modifiedBy!: string;
@@ -42,6 +66,15 @@ class EditHistoryEntry {
 
   @Prop()
   note?: string;
+
+  @Prop({ type: [ProposalItemSchema], default: [] })
+  previousItems?: ProposalItem[];
+
+  @Prop({ type: [ProposalItemSchema], default: [] })
+  newItems?: ProposalItem[];
+
+  @Prop()
+  reason?: string;
 }
 
 const EditHistoryEntrySchema = SchemaFactory.createForClass(EditHistoryEntry);
@@ -63,15 +96,27 @@ export class Proposal {
   @Prop({ required: true, min: 1 })
   guestCount!: number;
 
+  @Prop({ type: ClientInfoSchema })
+  clientInfo?: ClientInfo;
+
   @Prop({ type: [ProposalItemSchema], default: [] })
   items!: ProposalItem[];
 
   @Prop({ default: '' })
   notes!: string;
 
+  @Prop({ default: '' })
+  adminNotes?: string;
+
+  @Prop({ default: 0, min: 0 })
+  pricePerPlate?: number;
+
+  @Prop({ default: 0, min: 0 })
+  totalPrice?: number;
+
   @Prop({
     required: true,
-    enum: ['borrador', 'enviado', 'modificado_por_cliente', 'modificado_por_chef', 'aceptado', 'rechazado', 'expirado'],
+    enum: Object.keys(VALID_TRANSITIONS),
     default: 'borrador',
   })
   status!: string;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
 
 interface MenuItem {
@@ -52,6 +53,7 @@ function toDateInputValue(date: Date): string {
 
 export default function NewProposalPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [menus, setMenus] = useState<Menu[]>([]);
   const [selectedMenuId, setSelectedMenuId] = useState('');
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
@@ -111,10 +113,10 @@ export default function NewProposalPage() {
 
   async function handleSave() {
     setError('');
-    if (!selectedMenuId) { setError('Select a menu.'); return; }
-    if (selectedArray.length === 0) { setError('Select at least one item.'); return; }
-    if (!clientName.trim()) { setError('Client name is required.'); return; }
-    if (!eventDate) { setError('Event date is required.'); return; }
+    if (!selectedMenuId) { setError(t('proposals.errors.selectMenu')); return; }
+    if (selectedArray.length === 0) { setError(t('proposals.errors.selectItem')); return; }
+    if (!clientName.trim()) { setError(t('proposals.errors.clientName')); return; }
+    if (!eventDate) { setError(t('proposals.errors.eventDate')); return; }
 
     setSaving(true);
     try {
@@ -137,17 +139,17 @@ export default function NewProposalPage() {
       });
       router.push(`/proposals/${proposal._id}`);
     } catch (err: any) {
-      setError(err.message || 'Failed to create proposal');
+      setError(err.message || t('proposals.errors.createFailed'));
       setSaving(false);
     }
   }
 
   return (
     <div className="mx-auto max-w-3xl p-8">
-      <h1 className="text-3xl font-bold">New Proposal</h1>
+      <h1 className="text-3xl font-bold">{t('proposals.newTitle')}</h1>
 
       <div className="mt-8">
-        <label className="mb-2 block text-sm text-gray-400">Menu</label>
+        <label className="mb-2 block text-sm text-gray-400">{t('proposals.detail.menu')}</label>
         <select
           value={selectedMenuId}
           onChange={(e) => {
@@ -157,7 +159,7 @@ export default function NewProposalPage() {
           }}
           className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
         >
-          <option value="">Select a menu</option>
+          <option value="">{t('proposals.selectMenu')}</option>
           {menus.map((m) => (
             <option key={m._id} value={m._id}>{m.name}</option>
           ))}
@@ -166,7 +168,7 @@ export default function NewProposalPage() {
 
       {currentMenu && (
         <div className="mt-8 space-y-6">
-          <h2 className="text-lg font-semibold text-white/80">Select items</h2>
+          <h2 className="text-lg font-semibold text-white/80">{t('proposals.selectItems')}</h2>
           {currentMenu.categories.map((cat) => {
             const available = cat.items.filter((i) => i.isAvailable);
             if (available.length === 0) return null;
@@ -223,13 +225,13 @@ export default function NewProposalPage() {
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm text-gray-400">Client name</label>
+          <label className="mb-2 block text-sm text-gray-400">{t('proposals.clientName')}</label>
           <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)}
             placeholder="María Gómez"
             className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40" />
         </div>
         <div>
-          <label className="mb-2 block text-sm text-gray-400">Event date</label>
+          <label className="mb-2 block text-sm text-gray-400">{t('proposals.eventDate')}</label>
           <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
             className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40" />
         </div>
@@ -237,22 +239,22 @@ export default function NewProposalPage() {
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm text-gray-400">Number of people</label>
+          <label className="mb-2 block text-sm text-gray-400">{t('proposals.guestCount')}</label>
           <input type="number" min={1} value={guestCount}
             onChange={(e) => { const v = Number(e.target.value); setGuestCount(isNaN(v) || v < 1 ? 1 : v); }}
             className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
         </div>
         <div>
-          <label className="mb-2 block text-sm text-gray-400">Notes</label>
+          <label className="mb-2 block text-sm text-gray-400">{t('proposals.notes')}</label>
           <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
-            placeholder="Optional notes"
+            placeholder={t('proposals.notesPlaceholder')}
             className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40" />
         </div>
       </div>
 
       {selectedArray.length > 0 && (
         <div className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold text-white/80">Preview</h2>
+          <h2 className="mb-4 text-lg font-semibold text-white/80">{t('proposals.preview')}</h2>
           <div className="flex flex-wrap gap-8">
             <div className="flex-1 min-w-[280px]">
               <PricingBreakdown
@@ -262,7 +264,7 @@ export default function NewProposalPage() {
               />
             </div>
             <div className="flex-1 min-w-[200px] space-y-3">
-              <h3 className="text-sm font-medium text-gray-400">Selected items</h3>
+              <h3 className="text-sm font-medium text-gray-400">{t('proposals.selectedItems')}</h3>
               {selectedArray.map((item) => (
                 <div key={item._id} className="flex items-center justify-between text-sm">
                   <span className="text-gray-300">{item.name}</span>
@@ -279,9 +281,9 @@ export default function NewProposalPage() {
       <div className="mt-8 flex items-center gap-4">
         <button onClick={handleSave} disabled={saving}
           className="rounded-lg bg-white/10 px-6 py-3 font-medium text-white transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
-          {saving ? 'Saving...' : 'Save as Draft'}
+          {saving ? t('proposals.saving') : t('proposals.saveDraft')}
         </button>
-        <button onClick={() => router.push('/proposals')} className="text-sm text-gray-500 hover:text-white">Cancel</button>
+        <button onClick={() => router.push('/proposals')} className="text-sm text-gray-500 hover:text-white">{t('common.cancel')}</button>
       </div>
     </div>
   );

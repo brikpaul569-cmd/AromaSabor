@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import { usePlateStore, CategoryItem } from '@/stores/plate-store';
 import PlateView from '@/components/PlateView';
 import type { PlateItem } from '@/components/PlateView';
@@ -52,6 +53,7 @@ function formatPrice(price: number): string {
 
 export default function PublicMenuPage() {
   const params = useParams();
+  const { t } = useTranslation();
   const slug = params.slug as string;
 
   const [menu, setMenu] = useState<MenuData | null>(null);
@@ -129,7 +131,7 @@ export default function PublicMenuPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-950">
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">{t('common.loading')}</p>
       </div>
     );
   }
@@ -137,8 +139,8 @@ export default function PublicMenuPage() {
   if (notFound || !menu) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-950 p-8">
-        <h1 className="text-2xl font-bold text-white/60">Menu not found</h1>
-        <p className="mt-2 text-sm text-gray-500">This menu may not be published yet.</p>
+        <h1 className="text-2xl font-bold text-white/60">{t('public.menu.notFound')}</h1>
+        <p className="mt-2 text-sm text-gray-500">{t('public.menu.notFoundDesc')}</p>
       </div>
     );
   }
@@ -146,7 +148,7 @@ export default function PublicMenuPage() {
   const categoryOrder = menu.categories.map((cat) => ({
     id: cat._id,
     label: cat.label,
-    color: plateColors[cat.id] || fallbackColors[menu.categories.indexOf(cat) % fallbackColors.length],
+    color: plateColors[cat.id] ?? fallbackColors[menu.categories.indexOf(cat) % fallbackColors.length] ?? 'bg-gray-800/50',
   }));
 
   const sel: PlateItem[] = [];
@@ -171,17 +173,17 @@ export default function PublicMenuPage() {
         <header className="text-center">
           <h1 className="text-4xl font-bold">{menu.name}</h1>
           {menu.description && <p className="mt-2 text-gray-400">{menu.description}</p>}
-          <p className="mt-1 text-sm text-gray-500">by {menu.createdBy?.name || 'Chef'}</p>
+          <p className="mt-1 text-sm text-gray-500">{t('plate.by', { name: menu.createdBy?.name || 'Chef' })}</p>
         </header>
 
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
           {/* Plate view */}
           <div className="relative flex flex-col items-center justify-center">
-            <h2 className="mb-6 text-lg font-semibold text-white/80">Your Plate</h2>
+            <h2 className="mb-6 text-lg font-semibold text-white/80">{t('plate.yourPlate')}</h2>
             <PlateView items={sel} categoryOrder={categoryOrder} onItemTap={handleItemTap} />
 
             <div className="mt-6 w-full max-w-xs">
-              <label className="mb-2 block text-sm text-gray-400">Number of people</label>
+              <label className="mb-2 block text-sm text-gray-400">{t('plate.guestCount')}</label>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setGuestCount(guestCount - 1)}
@@ -205,7 +207,7 @@ export default function PublicMenuPage() {
             </div>
 
             {sel.length > 0 && (
-              <button onClick={clearAll} className="mt-4 text-sm text-gray-500 hover:text-white">Clear plate</button>
+              <button onClick={clearAll} className="mt-4 text-sm text-gray-500 hover:text-white">{t('plate.clear')}</button>
             )}
 
             {activePlateItem && !replaceCategoryId && (
@@ -244,7 +246,7 @@ export default function PublicMenuPage() {
                   {isOpen && (
                     <ul className="mt-2 space-y-2">
                       {cat.items.length === 0 ? (
-                        <p className="px-4 py-2 text-sm text-gray-500">No items</p>
+                        <p className="px-4 py-2 text-sm text-gray-500">{t('plate.noItems')}</p>
                       ) : (
                         cat.items.filter((i) => i.isAvailable).map((item) => {
                           const selected = isSelected(cat._id, item._id);
