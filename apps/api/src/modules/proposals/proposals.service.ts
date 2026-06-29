@@ -8,6 +8,31 @@ import { CreateProposalDto } from './dto/create-proposal.dto';
 import { calculateQuotation } from '@aromasabor/utils';
 import { assertValidTransition } from './proposals.state-machine';
 
+interface MenuCategoryItem {
+  _id?: any;
+  name: string;
+  description?: string;
+  pricePerPortion: number;
+  portionGrams?: number;
+  unit?: string;
+}
+
+interface MenuCategory {
+  _id?: any;
+  id: string;
+  label: string;
+  maxItems: number;
+  items: MenuCategoryItem[];
+}
+
+interface MenuDocument {
+  _id: Types.ObjectId;
+  name: string;
+  slug: string;
+  categories: MenuCategory[];
+  createdBy: Types.ObjectId;
+}
+
 @Injectable()
 export class ProposalsService {
   constructor(
@@ -48,6 +73,77 @@ export class ProposalsService {
       message: `Proposal for ${proposal.clientName} is now "${proposal.status}"`,
     });
     return proposal.save();
+  }
+
+  async submitFromMenu(
+    menu: MenuDocument,
+    selectedItems: { _id: string; categoryId: string }[],
+    guestCount: number,
+    clientName?: string,
+    notes?: string,
+  ) {
+    // Build proposal items by looking up each selected item in the menu
+    const proposalItems: ProposalItem[] = [];
+
+    for (const sel of selectedItems) {
+      const cat = menu.categories.find((c) => c._id?.toString() === sel.categoryId || c.id === sel.categoryId);
+      if (!cat) throw new BadRequestException(`Category ${sel.categoryId} not found in menu`);
+
+      const menuItem = cat.items.find((i) => i._id?.toString() === sel._id);
+      if (!menuItem) throw new BadRequestException(`Item ${sel._id} not found in category ${cat.label}`);
+
+      // Check if this category already has an item (enforce maxItems = 1 for simplicity)
+      if (proposalItems.some((pi) => pi.categoryId === (cat._id?.toString() || cat.id))) {
+        throw new BadRequestException(`Only one item allowed per category (${cat.label})`);
+      }
+
+      proposalItems.push({
+        name: menuItem.name,
+        description: menuItem.description || '',
+        categoryId: cat._id?.toString() || cat.id,
+        categoryLabel: cat.label,
+        pricePerPortion: menuItem.pricePerPortion,
+        portionGrams: menuItem.portionGrams,
+        unit: menuItem.unit || 'gr',
+        quantity: 1,
+      });
+    }
+
+    // Calculate pricing
+    const pricePerPlate = proposalItems.reduce((sum, i) => sum + i.pricePerPortion, 0);
+    const q = calculateQuotation(
+      proposalItems.map((i) => ({ price: i.pricePerPortion, quantity: guestCount })),
+    );
+
+    const proposal = new this.proposalModel({
+      menuId: menu._id,
+      token: uuidv4(),
+      clientName: clientName || 'Client',
+      eventDate: new Date().toISOString().split('T')[0],
+      guestCount,
+      items: proposalItems,
+      notes: notes || '',
+      status: 'enviado',
+      quotation: q.total,
+      pricePerPlate,
+      totalPrice: q.total,
+      expiresAt: new Date(Date.now() + 20 * 60 * 1000),
+      createdBy: menu.createdBy,
+    });
+
+    const saved = await proposal.save();
+
+    await this.notificationsService.create({
+      proposalId: saved._id,
+      type: 'proposal_created',
+      message: `New plate submission from "${clientName || 'Client'}" for menu "${menu.name}"`,
+    });
+
+    return {
+      token: saved.token,
+      proposalId: saved._id,
+      url: `/prop/${saved.token}`,
+    };
   }
 
   async create(dto: CreateProposalDto, userId: string) {

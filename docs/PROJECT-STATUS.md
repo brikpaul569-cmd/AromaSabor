@@ -15,12 +15,12 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 1. Chef creates a menu (permanent, does not expire)
 2. Chef creates a proposal from the menu and sends it to client
 3. Client accesses via unique token URL or QR code
-4. Client builds their plate visually using the Plate Builder
+4. Client builds their plate step-by-step via the Bowl Builder — ingredients appear as layers in a visual bowl with live pricing
 5. Chef and client negotiate by editing the proposal back and forth
 6. Proposal auto-expires after 20 minutes (configurable in V2)
 7. Either party approves or rejects — cycle ends
 
-**Key differentiator:** Visual Plate Builder — client sees their plate assembled item by item with live pricing.
+**Key differentiator:** Bowl Builder — client sees ingredients stack visually in a bowl as they step through categories, with live per-portion pricing.
 
 ---
 
@@ -573,7 +573,7 @@ Lightweight custom system (`apps/web/lib/i18n/`):
 ## 23. What Success Looks Like (MVP)
 
 - Chef can log in, create menus, add items
-- Client opens a link, sees a visual plate builder, builds a plate
+- Client opens a link, sees the Bowl Builder, builds a plate step-by-step
 - Chef sends a proposal with a 20-minute expiration
 - Client edits the proposal, chef gets notified
 - Chef edits back, client gets notified
@@ -581,3 +581,59 @@ Lightweight custom system (`apps/web/lib/i18n/`):
 - Chef downloads a QR code for the proposal
 - Expired proposals show nothing
 - All notifications live inside the app
+
+---
+
+## 24. Sprint 7 — Bowl Builder (Stories 6–8 Enhancement) ✅
+
+### What changed
+
+Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipotle-style Bowl Builder** with step-by-step category flow.
+
+### Before vs. After
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| **Visual** | Concentric colored circles with item name | CSS bowl with colored ingredient layers stacking bottom-to-top |
+| **Bowl shape** | Abstract `<div>` circles | U-shaped bowl via `border-radius` + elliptical rim with gradient |
+| **Selection** | All categories as expandable accordions simultaneously | Step-by-step flow: one category at a time |
+| **Navigation** | Open/close any accordion | Step indicator with numbered circles, Back/Next buttons, "Review your bowl" on last step |
+| **Empty state** | Dashed border circle + text | Bowl silhouette + `UtensilsCrossed` icon + "Select items to build your bowl" |
+| **Animations** | Simple CSS `fadeIn` keyframe | `AnimatePresence` + `motion.div` with staggered enter (100ms delay each layer), `layout` prop for smooth repositioning |
+| **Progress** | None visible | Step indicator with green checkmarks for completed categories |
+
+### How it works
+
+1. **Empty bowl** shown on page load
+2. Step indicator shows all menu categories as numbered steps
+3. **Step 1** (first category): items listed for selection → select one → colored layer appears at bowl bottom
+4. **Next** → Step 2: items for second category → select → second layer stacks above the first
+5. Continue through all categories
+6. **"Review your bowl"** on last step scrolls to pricing breakdown
+7. Any step can be revisited by clicking its circle in the indicator
+8. Clicking a layer in the bowl opens the existing Remove/Replace popover
+
+### Files changed
+
+| File | Action | Lines |
+|------|--------|-------|
+| `apps/web/components/PlateView.tsx` | Rewrite (bowl visual) | 167 |
+| `apps/web/app/(public)/menu/[slug]/page.tsx` | Modify (step flow) | 408 |
+
+### Key technical decisions
+
+- **Framer Motion** for animations (already a dependency in `package.json`): `AnimatePresence mode="popLayout"` with staggered delays
+- **Inline rgba colors**: Tailwind classes can't be composed dynamically in Framer Motion `style` — mapped via `colorMap` (8 tailwind → rgba entries + fallback)
+- **Same store/props**: No changes to `plate-store.ts`, `PricingBreakdown`, `PlateItemPopover`, or `ReplaceSelector` — all backward-compatible
+- **Bow height**: Each layer = `Math.floor(BOWL_H / count)` for equal distribution; top layer gets rounded top corners for a "mound" effect
+- **Bug fixed**: Moved `useRef` + `useCallback` before early returns in page.tsx to prevent React hook ordering violations
+
+### What stayed the same
+
+- ✅ Zustand store (`plate-store.ts`)
+- ✅ PricingBreakdown component
+- ✅ PlateItemPopover (tap layer → remove/replace)
+- ✅ ReplaceSelector
+- ✅ Guest count selector
+- ✅ All pricing logic (per-portion, IVA, total)
+- ✅ API endpoints and schemas

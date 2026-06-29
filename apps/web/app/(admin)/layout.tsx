@@ -4,13 +4,20 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { api, ApiClientError } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
-import NotificationBell from '@/components/NotificationBell';
+import AdminSidebar from '@/components/AdminSidebar';
+
+interface AdminUser {
+  _id: string;
+  email: string;
+  name: string;
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
   const [checking, setChecking] = useState(true);
+  const [user, setUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     if (pathname === '/login') {
@@ -18,8 +25,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    api.get<{ _id: string; email: string; name: string }>('/auth/me')
-      .then(() => setChecking(false))
+    api.get<AdminUser>('/auth/me')
+      .then((u) => {
+        setUser(u);
+        setChecking(false);
+      })
       .catch((err) => {
         if (err instanceof ApiClientError && err.statusCode === 401) {
           router.push('/login');
@@ -31,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (checking && pathname !== '/login') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-950">
         <p className="text-gray-500">{t('common.loading')}</p>
       </div>
     );
@@ -40,22 +50,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (pathname === '/login') return <>{children}</>;
 
   return (
-    <div>
-      <nav className="flex items-center gap-6 border-b border-white/10 px-8 py-4">
-        <a href="/dashboard" className="text-sm font-medium text-white/70 hover:text-white">
-          {t('nav.dashboard')}
-        </a>
-        <a href="/menus" className="text-sm font-medium text-white/70 hover:text-white">
-          {t('nav.menus')}
-        </a>
-        <a href="/proposals" className="text-sm font-medium text-white/70 hover:text-white">
-          {t('nav.proposals')}
-        </a>
-        <div className="ml-auto">
-          <NotificationBell />
-        </div>
-      </nav>
-      <main>{children}</main>
+    <div className="min-h-screen bg-gray-950">
+      <AdminSidebar user={user} />
+      <main className="ml-60 min-h-screen">{children}</main>
     </div>
   );
 }

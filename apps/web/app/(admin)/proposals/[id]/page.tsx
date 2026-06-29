@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
@@ -96,6 +98,7 @@ export default function ProposalDetailPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const id = params.id as string;
+  const [backLink, setBackLink] = useState('/proposals');
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -235,11 +238,20 @@ export default function ProposalDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl p-8">
+      {/* Back navigation */}
+      <Link
+        href="/proposals"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-gray-200"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        {t('proposals.back')}
+      </Link>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{proposal.clientName}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {formatDate(proposal.eventDate)} · Created by {proposal.createdBy?.name || t('proposals.detail.chef')}
+            {formatDate(proposal.eventDate)} · {t('proposals.detail.created')}: {proposal.createdBy?.name || t('proposals.detail.chef')}
           </p>
         </div>
         <div className="flex items-center gap-3">

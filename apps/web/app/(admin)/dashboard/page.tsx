@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, ApiClientError } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 
 interface AdminUser {
@@ -25,7 +24,6 @@ function formatPrice(price: number): string {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { t } = useTranslation();
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -33,25 +31,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      api.get<AdminUser>('/auth/me'),
+      api.get<AdminUser>('/auth/me').catch(() => null),
       api.get<Proposal[]>('/proposals'),
     ])
-      .then(([admin, proposals]) => {
-        setAdmin(admin);
+      .then(([user, proposals]) => {
+        setAdmin(user);
         setProposals(proposals);
       })
-      .catch((err) => {
-        if (err instanceof ApiClientError && err.statusCode === 401) {
-          router.push('/login');
-        }
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
-  }, [router]);
-
-  async function handleLogout() {
-    await api.post('/auth/logout');
-    router.push('/login');
-  }
+  }, []);
 
   if (loading) return <div className="p-8"><p className="text-gray-500">{t('common.loading')}</p></div>;
 
@@ -67,12 +56,6 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold">{t('dashboard.title')}</h1>
           {admin && <p className="mt-1 text-gray-400">{t('dashboard.welcome', { name: admin.name })}</p>}
         </div>
-        <button
-          onClick={handleLogout}
-          className="rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
-        >
-          {t('auth.logout')}
-        </button>
       </div>
 
       {/* Stats cards */}

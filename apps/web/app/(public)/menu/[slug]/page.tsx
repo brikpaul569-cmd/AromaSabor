@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { Check } from 'lucide-react';
 import { usePlateStore, CategoryItem } from '@/stores/plate-store';
 import PlateView from '@/components/PlateView';
 import type { PlateItem } from '@/components/PlateView';
@@ -59,10 +60,17 @@ export default function PublicMenuPage() {
   const [menu, setMenu] = useState<MenuData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState(0);
+
+  const router = useRouter();
 
   const [activePlateItem, setActivePlateItem] = useState<PopoverItem | null>(null);
   const [replaceCategoryId, setReplaceCategoryId] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [clientName, setClientName] = useState('');
+  const [notes, setNotes] = useState('');
 
   const selections = usePlateStore((s) => s.selections);
   const guestCount = usePlateStore((s) => s.guestCount);
@@ -128,6 +136,51 @@ export default function PublicMenuPage() {
     }
   }, [isSelected, deselectItem, selectItem]);
 
+  const pricingRef = useRef<HTMLDivElement>(null);
+
+  const handleReviewBowl = useCallback(() => {
+    setShowConfirm(true);
+  }, []);
+
+  const handleSubmitPlate = useCallback(async () => {
+    console.log('[submit] handleSubmitPlate called', { selections, menu, selectionsEmpty: Object.keys(selections).length === 0 });
+
+    // Build selected items from store + menu data
+    const flatItems: PlateItem[] = [];
+    if (menu) {
+      for (const [catId, items] of Object.entries(selections)) {
+        const cat = menu.categories.find((c) => c._id === catId);
+        console.log('[submit] category lookup', { catId, found: !!cat });
+        for (const item of items) {
+          flatItems.push({ ...item, categoryId: catId, categoryLabel: cat?.label });
+        }
+      }
+    }
+    console.log('[submit] flatItems', { length: flatItems.length, items: flatItems });
+
+    if (flatItems.length === 0) {
+      setSubmitError('No items selected. Please select at least one item before submitting.');
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const submitItems = flatItems.map((i) => ({ _id: i._id, categoryId: i.categoryId }));
+      console.log('[submit] sending request', { slug, submitItems, guestCount });
+      const result = await api.post<{ token: string; url: string }>(
+        `/menus/${slug}/submit-plate`,
+        { items: submitItems, guestCount, clientName: clientName || undefined, notes: notes || undefined },
+      );
+      console.log('[submit] success', result);
+      router.push(result.url);
+    } catch (err: any) {
+      console.error('[submit] error', err);
+      setSubmitError(err.message || 'Failed to submit your plate. Please try again.');
+      setSubmitting(false);
+    }
+  }, [menu, selections, slug, guestCount, clientName, notes, router]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-950">
@@ -162,6 +215,11 @@ export default function PublicMenuPage() {
   const pricingItems: PricingItem[] = sel.map((i) => ({
     _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel,
   }));
+
+  const orderedCategories = menu.categories;
+  const currentCategory = orderedCategories[activeStep]!;
+  const isFirstStep = activeStep === 0;
+  const isLastStep = activeStep === orderedCategories.length - 1;
 
   const activePlateCat = activePlateItem
     ? menu.categories.find((c) => c._id === activePlateItem.categoryId)
@@ -202,7 +260,7 @@ export default function PublicMenuPage() {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6" ref={pricingRef}>
               <PricingBreakdown items={pricingItems} guestCount={guestCount} categories={categoryOrder} />
             </div>
 
@@ -221,75 +279,244 @@ export default function PublicMenuPage() {
             )}
           </div>
 
-          {/* Category items */}
+          {/* Step-by-step category selection */}
           <div className="space-y-6">
-            {menu.categories.map((cat) => {
-              const isOpen = activeCategory === cat._id;
-              const selCount = getSelectionCount(cat._id);
-              const remaining = cat.maxItems - selCount;
+            {/* Step indicator */}
+            <div className="flex items-center gap-0 overflow-x-auto pb-2">
+              {menu.categories.map((cat, i) => {
+                const isCompleted = getSelectionCount(cat._id) > 0;
+                const isCurrent = activeStep === i;
+                const isFuture = i > activeStep;
 
-              return (
-                <div key={cat._id}>
-                  <button
-                    onClick={() => setActiveCategory(isOpen ? null : cat._id)}
-                    className="flex w-full items-center justify-between rounded-lg bg-white/5 px-4 py-3 text-left transition hover:bg-white/10"
-                  >
-                    <span className="font-medium">
-                      {cat.label}
-                      {selCount > 0 && (
-                        <span className="ml-2 text-sm text-green-400">({selCount}/{cat.maxItems})</span>
-                      )}
-                    </span>
-                    <span className={`text-xs text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
-                  </button>
+                return (
+                  <div key={cat._id} className="flex items-center flex-1 min-w-0">
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={isFuture}
+                        onClick={() => setActiveStep(i)}
+                        className={`flex flex-col items-center gap-1 transition ${
+                          isFuture ? 'cursor-default' : 'cursor-pointer'
+                        }`}
+                      >
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition ${
+                            isCompleted
+                              ? 'bg-green-500 text-white'
+                              : isCurrent
+                                ? 'bg-white text-gray-900 ring-2 ring-white'
+                                : 'border border-white/20 bg-transparent text-gray-500'
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            i + 1
+                          )}
+                        </div>
+                        <span
+                          className={`text-[10px] leading-tight text-center max-w-[72px] truncate ${
+                            isFuture ? 'text-gray-500' : 'text-white/80'
+                          }`}
+                        >
+                          {cat.label}
+                        </span>
+                      </button>
+                    </div>
+                    {i < menu.categories.length - 1 && (
+                      <div
+                        className={`flex-1 h-px mx-1 ${
+                          i < activeStep
+                            ? 'bg-green-500/50'
+                            : 'bg-white/10'
+                        }`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
-                  {isOpen && (
-                    <ul className="mt-2 space-y-2">
-                      {cat.items.length === 0 ? (
-                        <p className="px-4 py-2 text-sm text-gray-500">{t('plate.noItems')}</p>
-                      ) : (
-                        cat.items.filter((i) => i.isAvailable).map((item) => {
-                          const selected = isSelected(cat._id, item._id);
-                          const canSelect = !selected && remaining <= 0;
-                          return (
-                            <li key={item._id}>
-                              <button
-                                onClick={() => handleItemSelect(cat, item)}
-                                disabled={canSelect}
-                                className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition ${
-                                  selected
-                                    ? 'bg-green-500/20 ring-1 ring-green-400/40'
-                                    : canSelect
-                                      ? 'bg-white/5 opacity-40 cursor-not-allowed'
-                                      : 'bg-white/5 hover:bg-white/10'
+            {/* Current category items */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-medium text-white">
+                  {currentCategory.label}
+                </h3>
+                <span className="text-xs text-green-400">
+                  {getSelectionCount(currentCategory._id)}/{currentCategory.maxItems} selected
+                </span>
+              </div>
+
+              <ul className="space-y-2">
+                {currentCategory.items.filter((i) => i.isAvailable).length === 0 ? (
+                  <p className="py-2 text-sm text-gray-500">{t('plate.noItems')}</p>
+                ) : (
+                  currentCategory.items
+                    .filter((i) => i.isAvailable)
+                    .map((item) => {
+                      const selected = isSelected(currentCategory._id, item._id);
+                      const selCount = getSelectionCount(currentCategory._id);
+                      const remaining = currentCategory.maxItems - selCount;
+                      const atMax = !selected && remaining <= 0;
+
+                      return (
+                        <li key={item._id}>
+                          <button
+                            onClick={() => handleItemSelect(currentCategory, item)}
+                            disabled={atMax}
+                            className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition ${
+                              selected
+                                ? 'bg-green-500/20 ring-1 ring-green-400/40'
+                                : atMax
+                                  ? 'bg-white/5 opacity-40 cursor-not-allowed'
+                                  : 'bg-white/5 hover:bg-white/10'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium">{item.name}</p>
+                              {item.description && (
+                                <p className="truncate text-xs text-gray-500">
+                                  {item.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 ml-4 shrink-0">
+                              {item.portionGrams && (
+                                <span className="text-xs text-gray-500">
+                                  {item.portionGrams}
+                                  {item.unit}
+                                </span>
+                              )}
+                              <span className="text-sm font-medium">
+                                {formatPrice(item.pricePerPortion)}
+                              </span>
+                              <span
+                                className={`text-xs ${
+                                  selected ? 'text-green-400' : 'text-white/60'
                                 }`}
                               >
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium">{item.name}</p>
-                                  {item.description && (
-                                    <p className="truncate text-xs text-gray-500">{item.description}</p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-3 ml-4 shrink-0">
-                                  {item.portionGrams && (
-                                    <span className="text-xs text-gray-500">{item.portionGrams}{item.unit}</span>
-                                  )}
-                                  <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
-                                  <span className="text-xs">{selected ? '✓' : '+'}</span>
-                                </div>
-                              </button>
-                            </li>
-                          );
-                        })
-                      )}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
+                                {selected ? '✓' : '+'}
+                              </span>
+                            </div>
+                          </button>
+                        </li>
+                      );
+                    })
+                )}
+              </ul>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-4">
+              <button
+                type="button"
+                disabled={isFirstStep}
+                onClick={() => setActiveStep((s) => s - 1)}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Back
+              </button>
+
+              {isLastStep ? (
+                <button
+                  type="button"
+                  onClick={handleReviewBowl}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition bg-green-600 text-white hover:bg-green-500"
+                >
+                  Review your bowl
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setActiveStep((s) => s + 1)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition bg-white/10 text-white/80 hover:bg-white/20"
+                >
+                  Next
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Confirmation modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-white">Confirm your bowl</h3>
+            <p className="mt-1 text-sm text-gray-400">{menu.name}</p>
+
+            {/* Selected items summary */}
+            {sel.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {sel.map((item) => (
+                  <li key={item._id} className="flex items-center justify-between text-sm">
+                    <span className="text-white/80">{item.name}</span>
+                    <span className="text-gray-400">{formatPrice(item.pricePerPortion)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Pricing reference */}
+            <div className="mt-4 rounded-lg bg-white/5 px-4 py-3">
+              <PricingBreakdown items={pricingItems} guestCount={guestCount} categories={categoryOrder} />
+            </div>
+
+            {/* Client name (optional) */}
+            <div className="mt-4">
+              <label className="mb-1 block text-sm text-gray-400">Your name (optional)</label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="Enter your name"
+                className="w-full rounded-lg bg-white/10 px-4 py-2 text-sm text-white outline-none ring-1 ring-white/20 placeholder:text-gray-600 focus:ring-2 focus:ring-white/40"
+              />
+            </div>
+
+            {/* Notes (optional) */}
+            <div className="mt-3">
+              <label className="mb-1 block text-sm text-gray-400">Notes (optional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Any special requests?"
+                rows={2}
+                className="w-full resize-none rounded-lg bg-white/10 px-4 py-2 text-sm text-white outline-none ring-1 ring-white/20 placeholder:text-gray-600 focus:ring-2 focus:ring-white/40"
+              />
+            </div>
+
+            {/* Error */}
+            {submitError && (
+              <div className="mt-3 rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {submitError}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowConfirm(false); setSubmitError(null); }}
+                disabled={submitting}
+                className="rounded-lg px-4 py-2 text-sm text-gray-400 transition hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitPlate}
+                disabled={submitting}
+                className="rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-green-500 disabled:opacity-50"
+              >
+                {submitting ? 'Sending...' : 'Send to chef'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {replaceCategoryId && activePlateItem && activePlateCat && (
         <ReplaceSelector
