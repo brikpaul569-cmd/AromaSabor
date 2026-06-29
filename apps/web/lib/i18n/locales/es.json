@@ -182,6 +182,12 @@
   "proposals.edit.guestCount": "Comensales",
   "proposals.edit.loadingMenu": "Cargando menú...",
 
+  "notification.title": "Notificaciones",
+  "notification.empty": "No hay notificaciones",
+  "notification.markRead": "Marcar como leída",
+  "notification.unreadCount": "{count} sin leer",
+  "notification.seeAll": "Ver todas",
+
   "notification.proposalCreated": "Propuesta creada",
   "notification.proposalSent": "Propuesta enviada al cliente",
   "notification.proposalApproved": "Propuesta aprobada",

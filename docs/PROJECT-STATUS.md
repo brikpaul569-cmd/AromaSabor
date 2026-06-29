@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
-> **Date:** 2026-06-28
-> **Phase:** Sprint 6 — Bidirectional Editing (Stories 17-18 🏗️)
+> **Date:** 2026-06-29
+> **Phase:** Sprint 7 — Notifications (Story 20 🏗️)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -60,8 +60,8 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 14 | Client access | Proposals | S5 | ✅
 | 15 | Expiration | Proposals | S5 | ✅
 | 16 | QR code | Proposals | S5 | ✅
-| 17 | Client modifies | Negotiation | S6 | 🏗️
-| 18 | Chef modifies | Negotiation | S6 | 🏗️
+| 17 | Client modifies | Negotiation | S6 | ✅
+| 18 | Chef modifies | Negotiation | S6 | ✅
 | 19 | Approve / Reject | Negotiation | S7 | ✅
 | 20 | In-app notifications | Negotiation | S7 |
 
@@ -92,7 +92,7 @@ Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual
 Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) ✅
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access, Expiration, QR) ✅
-Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing) 🏗️
+Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing) ✅
 Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications) 🏗️
                       ─────────
                         10 weeks

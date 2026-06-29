@@ -182,6 +182,12 @@
   "proposals.edit.guestCount": "Number of People",
   "proposals.edit.loadingMenu": "Loading menu...",
 
+  "notification.title": "Notifications",
+  "notification.empty": "No notifications",
+  "notification.markRead": "Mark as read",
+  "notification.unreadCount": "{count} unread",
+  "notification.seeAll": "See all",
+
   "notification.proposalCreated": "Proposal created",
   "notification.proposalSent": "Proposal sent to client",
   "notification.proposalApproved": "Proposal approved",

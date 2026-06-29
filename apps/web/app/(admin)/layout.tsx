@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { api, ApiClientError } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -50,6 +51,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <a href="/proposals" className="text-sm font-medium text-white/70 hover:text-white">
           {t('nav.proposals')}
         </a>
+        <div className="ml-auto">
+          <NotificationBell />
+        </div>
       </nav>
       <main>{children}</main>
     </div>
