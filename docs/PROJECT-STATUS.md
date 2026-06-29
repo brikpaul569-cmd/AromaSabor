@@ -54,7 +54,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 8 | Visual plate | Plate Builder | S2 |
 | 9 | Replace and remove | Plate Builder | S3 |
 | 10 | Quantity adjustment | Plate Builder | S3 | ✅
-| 11 | Live pricing | Plate Builder | S3 |
+| 11 | Live pricing | Plate Builder | S3 | ✅
 | 12 | Create proposal | Proposals | S4 | ✅
 | 13 | Send proposal | Proposals | S4 | ✅
 | 14 | Client access | Proposals | S5 | ✅
@@ -92,7 +92,6 @@ Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual
 Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) ✅
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access, Expiration, QR) ✅
-Sprint 5 (1 week)  → Stories 14-16 (Client access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing)
 Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications)
                       ─────────
