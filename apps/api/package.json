@@ -7,9 +7,12 @@
     "build": "nest build",
     "start": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@aromasabor/utils": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
@@ -25,7 +28,6 @@
     "mongoose": "^8.0.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.0",
-    "@aromasabor/utils": "workspace:*",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
     "uuid": "^11.0.0"
@@ -33,12 +35,17 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.1.27",
     "@types/bcrypt": "^5.0.0",
     "@types/cookie-parser": "^1.4.0",
     "@types/express": "^5.0.6",
     "@types/node": "^20.0.0",
     "@types/passport-jwt": "^4.0.0",
+    "@types/supertest": "^7.2.0",
     "@types/uuid": "^10.0.0",
-    "typescript": "^5.7.0"
+    "mongodb-memory-server": "^11.2.0",
+    "supertest": "^7.2.2",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.9"
   }
 }
