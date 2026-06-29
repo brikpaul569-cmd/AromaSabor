@@ -8,14 +8,23 @@ class ProposalItem {
   @Prop({ required: true })
   name!: string;
 
-  @Prop({ required: true })
-  description!: string;
+  @Prop({ default: '' })
+  description?: string;
 
-  @Prop({ required: true, enum: ['entrada', 'plato_fuerte', 'guarnicion', 'postre'] })
-  category!: string;
+  @Prop({ required: true })
+  categoryId!: string;
+
+  @Prop({ required: true })
+  categoryLabel!: string;
 
   @Prop({ required: true, min: 0 })
-  price!: number;
+  pricePerPortion!: number;
+
+  @Prop({ min: 0 })
+  portionGrams?: number;
+
+  @Prop({ default: 'gr' })
+  unit?: string;
 
   @Prop({ required: true, min: 1 })
   quantity!: number;

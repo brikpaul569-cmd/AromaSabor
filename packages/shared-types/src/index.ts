@@ -1,10 +1,5 @@
-// ── Enums ──
-
-export type CategoryType = 'entrada' | 'plato_fuerte' | 'guarnicion' | 'postre';
 export type ProposalStatus = 'borrador' | 'enviado' | 'modificado_por_cliente' | 'modificado_por_chef' | 'aceptado' | 'rechazado' | 'expirado';
 export type EditorRole = 'chef' | 'cliente';
-
-// ── Admin ──
 
 export interface Admin {
   _id: string;
@@ -16,15 +11,23 @@ export interface Admin {
   updatedAt: string;
 }
 
-// ── Menu ──
-
 export interface MenuItem {
   _id: string;
   name: string;
-  description: string;
-  category: CategoryType;
-  price: number;
-  weight?: number;
+  description?: string;
+  imageUrl?: string;
+  portionGrams?: number;
+  pricePerPortion: number;
+  unit: string;
+  isAvailable: boolean;
+}
+
+export interface MenuCategory {
+  _id: string;
+  id: string;
+  label: string;
+  maxItems: number;
+  items: MenuItem[];
 }
 
 export interface Menu {
@@ -32,16 +35,22 @@ export interface Menu {
   name: string;
   slug: string;
   description?: string;
-  items: MenuItem[];
+  categories: MenuCategory[];
   isActive: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// ── Proposal ──
-
-export interface ProposalItem extends MenuItem {
+export interface ProposalItem {
+  _id: string;
+  name: string;
+  description: string;
+  categoryId: string;
+  categoryLabel: string;
+  pricePerPortion: number;
+  portionGrams?: number;
+  unit: string;
   quantity: number;
 }
 
@@ -71,8 +80,6 @@ export interface Proposal {
   updatedAt: string;
 }
 
-// ── Notification ──
-
 export type NotificationType = 'proposal_created' | 'proposal_updated' | 'proposal_accepted' | 'proposal_rejected' | 'proposal_expired';
 
 export interface Notification {
@@ -84,8 +91,6 @@ export interface Notification {
   createdAt: string;
 }
 
-// ── Auth ──
-
 export interface LoginRequest {
   email: string;
   password: string;
@@ -95,8 +100,6 @@ export interface LoginResponse {
   accessToken: string;
   admin: Pick<Admin, '_id' | 'email' | 'name'>;
 }
-
-// ── API ──
 
 export interface ApiError {
   statusCode: number;

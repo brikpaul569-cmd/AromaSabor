@@ -6,6 +6,7 @@ import { Menu } from '../../schemas/menu.schema';
 function slugify(name: string): string {
   return name
     .toLowerCase()
+    .normalize('NFKD')
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -41,51 +42,102 @@ export class MenusService {
     return menu;
   }
 
-  async addItem(menuId: string, item: { name: string; description: string; category: string; price: number }) {
+  async addCategory(menuId: string, data: { id: string; label: string; maxItems: number }) {
     if (!Types.ObjectId.isValid(menuId)) throw new NotFoundException('Invalid menu ID');
-    if (!['entrada', 'plato_fuerte', 'guarnicion', 'postre'].includes(item.category)) {
-      throw new BadRequestException('Invalid category');
-    }
-    const menu = await this.menuModel.findById(menuId);
+    const menu = await this.menuModel.findByIdAndUpdate(
+      menuId,
+      { $push: { categories: { id: data.id, label: data.label, maxItems: data.maxItems, items: [] } } },
+      { new: true },
+    );
     if (!menu) throw new NotFoundException('Menu not found');
-    menu.items.push(item as any);
-    return menu.save();
+    return menu;
   }
 
-  async updateItem(menuId: string, itemId: string, data: { name?: string; description?: string; category?: string; price?: number; weight?: number }) {
-    if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(itemId)) {
+  async updateCategory(menuId: string, categoryId: string, data: { id?: string; label?: string; maxItems?: number }) {
+    if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId)) {
       throw new NotFoundException('Invalid ID');
     }
-    if (data.category && !['entrada', 'plato_fuerte', 'guarnicion', 'postre'].includes(data.category)) {
-      throw new BadRequestException('Invalid category');
+    const update: Record<string, any> = {};
+    if (data.id !== undefined) update['categories.$.id'] = data.id;
+    if (data.label !== undefined) update['categories.$.label'] = data.label;
+    if (data.maxItems !== undefined) update['categories.$.maxItems'] = data.maxItems;
+
+    const menu = await this.menuModel.findOneAndUpdate(
+      { _id: menuId, 'categories._id': categoryId },
+      { $set: update },
+      { new: true },
+    );
+    if (!menu) throw new NotFoundException('Menu or category not found');
+    return menu;
+  }
+
+  async removeCategory(menuId: string, categoryId: string) {
+    if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId)) {
+      throw new NotFoundException('Invalid ID');
+    }
+    const menu = await this.menuModel.findByIdAndUpdate(
+      menuId,
+      { $pull: { categories: { _id: categoryId } } },
+      { new: true },
+    );
+    if (!menu) throw new NotFoundException('Menu not found');
+    return menu;
+  }
+
+  async addItem(
+    menuId: string,
+    categoryId: string,
+    item: { name: string; description?: string; pricePerPortion: number; portionGrams?: number; unit?: string; isAvailable?: boolean },
+  ) {
+    if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId)) {
+      throw new NotFoundException('Invalid ID');
     }
     const menu = await this.menuModel.findOneAndUpdate(
-      { _id: menuId, 'items._id': itemId },
-      {
-        $set: {
-          ...(data.name && { 'items.$.name': data.name }),
-          ...(data.description !== undefined && { 'items.$.description': data.description }),
-          ...(data.category && { 'items.$.category': data.category }),
-          ...(data.price !== undefined && { 'items.$.price': data.price }),
-          ...(data.weight !== undefined && { 'items.$.weight': data.weight }),
-        },
-      },
+      { _id: menuId, 'categories._id': categoryId },
+      { $push: { 'categories.$.items': item } },
       { new: true },
+    );
+    if (!menu) throw new NotFoundException('Menu or category not found');
+    return menu;
+  }
+
+  async updateItem(
+    menuId: string,
+    categoryId: string,
+    itemId: string,
+    data: { name?: string; description?: string; pricePerPortion?: number; portionGrams?: number; unit?: string; isAvailable?: boolean; imageUrl?: string },
+  ) {
+    if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId) || !Types.ObjectId.isValid(itemId)) {
+      throw new NotFoundException('Invalid ID');
+    }
+    const update: Record<string, any> = {};
+    if (data.name !== undefined) update['categories.$[cat].items.$[item].name'] = data.name;
+    if (data.description !== undefined) update['categories.$[cat].items.$[item].description'] = data.description;
+    if (data.pricePerPortion !== undefined) update['categories.$[cat].items.$[item].pricePerPortion'] = data.pricePerPortion;
+    if (data.portionGrams !== undefined) update['categories.$[cat].items.$[item].portionGrams'] = data.portionGrams;
+    if (data.unit !== undefined) update['categories.$[cat].items.$[item].unit'] = data.unit;
+    if (data.isAvailable !== undefined) update['categories.$[cat].items.$[item].isAvailable'] = data.isAvailable;
+    if (data.imageUrl !== undefined) update['categories.$[cat].items.$[item].imageUrl'] = data.imageUrl;
+
+    const menu = await this.menuModel.findOneAndUpdate(
+      { _id: menuId },
+      { $set: update },
+      { arrayFilters: [{ 'cat._id': categoryId }, { 'item._id': itemId }], new: true },
     );
     if (!menu) throw new NotFoundException('Menu or item not found');
     return menu;
   }
 
-  async removeItem(menuId: string, itemId: string) {
-    if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(itemId)) {
+  async removeItem(menuId: string, categoryId: string, itemId: string) {
+    if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId) || !Types.ObjectId.isValid(itemId)) {
       throw new NotFoundException('Invalid ID');
     }
-    const menu = await this.menuModel.findByIdAndUpdate(
-      menuId,
-      { $pull: { items: { _id: itemId } } },
+    const menu = await this.menuModel.findOneAndUpdate(
+      { _id: menuId, 'categories._id': categoryId },
+      { $pull: { 'categories.$.items': { _id: itemId } } },
       { new: true },
     );
-    if (!menu) throw new NotFoundException('Menu not found');
+    if (!menu) throw new NotFoundException('Menu or item not found');
     return menu;
   }
 

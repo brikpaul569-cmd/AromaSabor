@@ -4,24 +4,47 @@ import { HydratedDocument, Types } from 'mongoose';
 export type MenuDocument = HydratedDocument<Menu>;
 
 @Schema()
-class MenuItem {
+class MenuCategoryItem {
   @Prop({ required: true })
   name!: string;
 
-  @Prop({ required: true })
-  description!: string;
+  @Prop({ default: '' })
+  description?: string;
 
-  @Prop({ required: true, enum: ['entrada', 'plato_fuerte', 'guarnicion', 'postre'] })
-  category!: string;
-
-  @Prop({ required: true, min: 0 })
-  price!: number;
+  @Prop()
+  imageUrl?: string;
 
   @Prop({ min: 0 })
-  weight?: number;
+  portionGrams?: number;
+
+  @Prop({ required: true, min: 0 })
+  pricePerPortion!: number;
+
+  @Prop({ default: 'gr' })
+  unit?: string;
+
+  @Prop({ default: true })
+  isAvailable?: boolean;
 }
 
-const MenuItemSchema = SchemaFactory.createForClass(MenuItem);
+const MenuCategoryItemSchema = SchemaFactory.createForClass(MenuCategoryItem);
+
+@Schema()
+class MenuCategory {
+  @Prop({ required: true })
+  id!: string;
+
+  @Prop({ required: true })
+  label!: string;
+
+  @Prop({ required: true, min: 1, default: 1 })
+  maxItems!: number;
+
+  @Prop({ type: [MenuCategoryItemSchema], default: [] })
+  items!: MenuCategoryItem[];
+}
+
+const MenuCategorySchema = SchemaFactory.createForClass(MenuCategory);
 
 @Schema({ timestamps: true })
 export class Menu {
@@ -34,8 +57,8 @@ export class Menu {
   @Prop({ default: '' })
   description?: string;
 
-  @Prop({ type: [MenuItemSchema], default: [] })
-  items!: MenuItem[];
+  @Prop({ type: [MenuCategorySchema], default: [] })
+  categories!: MenuCategory[];
 
   @Prop({ default: false })
   isActive!: boolean;

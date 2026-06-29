@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, IsArray, ValidateNested, IsMongoId, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, IsArray, ValidateNested, IsMongoId } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateProposalItemDto {
@@ -6,17 +6,30 @@ export class CreateProposalItemDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  description!: string;
+  description?: string;
 
   @IsString()
-  @IsIn(['entrada', 'plato_fuerte', 'guarnicion', 'postre'])
-  category!: string;
+  @IsNotEmpty()
+  categoryId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  categoryLabel!: string;
 
   @IsNumber()
   @Min(0)
-  price!: number;
+  pricePerPortion!: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  portionGrams?: number;
+
+  @IsOptional()
+  @IsString()
+  unit?: string;
 
   @IsNumber()
   @Min(1)

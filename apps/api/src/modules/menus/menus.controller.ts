@@ -11,10 +11,7 @@ export class MenusController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(
-    @Body() body: { name: string; description?: string },
-    @CurrentUser() user: any,
-  ) {
+  create(@Body() body: { name: string; description?: string }, @CurrentUser() user: any) {
     return this.menusService.create(body, user._id);
   }
 
@@ -40,25 +37,52 @@ export class MenusController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post(':id/items')
-  addItem(@Param('id') id: string, @Body() body: { name: string; description: string; category: string; price: number }) {
-    return this.menusService.addItem(id, body);
+  @Post(':id/categories')
+  addCategory(@Param('id') id: string, @Body() body: { id: string; label: string; maxItems: number }) {
+    return this.menusService.addCategory(id, body);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch(':id/items/:itemId')
+  @Patch(':id/categories/:categoryId')
+  updateCategory(
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string,
+    @Body() body: { id?: string; label?: string; maxItems?: number },
+  ) {
+    return this.menusService.updateCategory(id, categoryId, body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/categories/:categoryId')
+  removeCategory(@Param('id') id: string, @Param('categoryId') categoryId: string) {
+    return this.menusService.removeCategory(id, categoryId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/categories/:categoryId/items')
+  addItem(
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string,
+    @Body() body: { name: string; description?: string; pricePerPortion: number; portionGrams?: number; unit?: string; isAvailable?: boolean },
+  ) {
+    return this.menusService.addItem(id, categoryId, body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/categories/:categoryId/items/:itemId')
   updateItem(
     @Param('id') id: string,
+    @Param('categoryId') categoryId: string,
     @Param('itemId') itemId: string,
-    @Body() body: { name?: string; description?: string; category?: string; price?: number },
+    @Body() body: { name?: string; description?: string; pricePerPortion?: number; portionGrams?: number; unit?: string; isAvailable?: boolean; imageUrl?: string },
   ) {
-    return this.menusService.updateItem(id, itemId, body);
+    return this.menusService.updateItem(id, categoryId, itemId, body);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete(':id/items/:itemId')
-  removeItem(@Param('id') id: string, @Param('itemId') itemId: string) {
-    return this.menusService.removeItem(id, itemId);
+  @Delete(':id/categories/:categoryId/items/:itemId')
+  removeItem(@Param('id') id: string, @Param('categoryId') categoryId: string, @Param('itemId') itemId: string) {
+    return this.menusService.removeItem(id, categoryId, itemId);
   }
 
   @UseGuards(JwtAuthGuard)

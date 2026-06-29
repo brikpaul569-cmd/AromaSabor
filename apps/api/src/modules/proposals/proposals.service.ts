@@ -16,7 +16,7 @@ export class ProposalsService {
 
   async create(dto: CreateProposalDto, userId: string) {
     const quotation = calculateQuotation(
-      dto.items.map((i) => ({ price: i.price, quantity: dto.guestCount })),
+      dto.items.map((i) => ({ price: i.pricePerPortion, quantity: dto.guestCount })),
     );
 
     const proposal = new this.proposalModel({
