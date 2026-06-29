@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Proposal, ProposalItem, ProposalDocument } from '../../schemas/proposal.schema';
@@ -154,19 +154,112 @@ export class ProposalsService {
     return proposal.editHistory || [];
   }
 
-  async update(id: string, data: Partial<Proposal> & { reason?: string }) {
+  async update(id: string, data: Record<string, any>) {
     const proposal = await this.proposalModel.findById(id);
     if (!proposal) throw new NotFoundException('Proposal not found');
+
+    // Block editing of terminal or expired proposals
+    if (proposal.status === 'expirado') {
+      throw new ConflictException('This proposal has expired and cannot be modified');
+    }
+    if (['aceptado', 'rechazado'].includes(proposal.status)) {
+      throw new ConflictException(`Cannot modify a proposal with status "${proposal.status}"`);
+    }
+    // Auto-expire if past due
+    if (proposal.status === 'enviado' && proposal.expiresAt < new Date()) {
+      proposal.status = 'expirado';
+      return proposal.save();
+    }
+
     const previousItems = [...proposal.items] as ProposalItem[];
-    const { reason, ...fields } = data;
-    Object.assign(proposal, fields);
-    if (fields.items) {
+    const reason = typeof data.reason === 'string' ? data.reason : undefined;
+
+    // Only allow specific fields — no Object.assign with untrusted keys
+    if (data.items !== undefined) {
+      proposal.items = data.items as any;
+    }
+    if (data.guestCount !== undefined) {
+      proposal.guestCount = data.guestCount;
+    }
+    if (data.notes !== undefined) {
+      proposal.notes = data.notes;
+    }
+
+    if (data.items) {
       const pricing = this.recalculate(proposal);
       proposal.pricePerPlate = pricing.pricePerPlate;
       proposal.quotation = pricing.quotation;
       proposal.totalPrice = pricing.quotation;
+      // Transition state when chef edits an active proposal
+      if (['enviado', 'modificado_por_cliente'].includes(proposal.status)) {
+        assertValidTransition(proposal.status, 'modificado_por_chef');
+        proposal.status = 'modificado_por_chef';
+      }
     }
     return this.saveWithHistory(proposal, 'chef', previousItems, reason);
+  }
+
+  async updateByToken(
+    token: string,
+    updateData: { items: ProposalItem[]; guestCount?: number; reason?: string },
+  ) {
+    const proposal = await this.proposalModel.findOne({ token }).populate('menuId');
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    if (proposal.status === 'expirado') {
+      throw new ConflictException('This proposal has expired and cannot be modified');
+    }
+    if (['aceptado', 'rechazado'].includes(proposal.status)) {
+      throw new ConflictException(`Cannot modify a proposal with status "${proposal.status}"`);
+    }
+    if (!['enviado', 'modificado_por_chef'].includes(proposal.status)) {
+      throw new ConflictException(`Cannot modify proposal in status "${proposal.status}"`);
+    }
+
+    const previousItems = [...proposal.items] as ProposalItem[];
+
+    // Validate all items belong to the menu and prices match
+    if (updateData.items) {
+      if (!proposal.menuId) {
+        throw new BadRequestException('Cannot validate items: proposal has no menu');
+      }
+      const menu: any = proposal.menuId;
+      const menuItemMap = new Map<string, { pricePerPortion: number }>();
+      for (const cat of menu.categories) {
+        for (const menuItem of cat.items) {
+          menuItemMap.set(menuItem._id.toString(), { pricePerPortion: menuItem.pricePerPortion });
+        }
+      }
+      for (const item of updateData.items) {
+        const itemId = (item as any)._id;
+        const stored = menuItemMap.get(itemId);
+        if (!stored) {
+          throw new BadRequestException(`Item "${item.name}" does not belong to this menu`);
+        }
+        if ((item as any).pricePerPortion !== stored.pricePerPortion) {
+          throw new BadRequestException(
+            `Price mismatch for "${item.name}": cannot override menu price of $${stored.pricePerPortion}`,
+          );
+        }
+      }
+    }
+
+    proposal.items = updateData.items as any;
+
+    if (updateData.guestCount !== undefined) {
+      proposal.guestCount = updateData.guestCount;
+    }
+
+    // Recalculate pricing
+    const pricing = this.recalculate(proposal);
+    proposal.pricePerPlate = pricing.pricePerPlate;
+    proposal.quotation = pricing.quotation;
+    proposal.totalPrice = pricing.quotation;
+
+    // Transition state
+    assertValidTransition(proposal.status, 'modificado_por_cliente');
+    proposal.status = 'modificado_por_cliente';
+
+    return this.saveWithHistory(proposal, 'cliente', previousItems, updateData.reason);
   }
 
   async remove(id: string) {

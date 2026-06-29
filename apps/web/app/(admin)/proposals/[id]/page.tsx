@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
+import ProposalPlateEditor from '@/components/ProposalPlateEditor';
+import type { ProposalPlateEditorProps } from '@/components/ProposalPlateEditor';
 import QRCode from 'qrcode';
 
 interface ProposalItem {
@@ -105,6 +107,8 @@ export default function ProposalDetailPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [history, setHistory] = useState<EditHistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const qrGenerated = useRef(false);
 
   useEffect(() => {
@@ -164,6 +168,22 @@ export default function ProposalDetailPage() {
     }
   };
 
+  const handleChefSave: ProposalPlateEditorProps['onSave'] = useCallback(
+    async (items, guestCount, reason) => {
+      setIsSaving(true);
+      try {
+        const updated = await api.patch<Proposal>(`/proposals/${id}`, { items, guestCount, reason });
+        setProposal(updated);
+        setIsEditing(false);
+      } catch (err: any) {
+        setSendError(err.message || 'Failed to save changes');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [id],
+  );
+
   const handleCopyLink = async () => {
     const url = `${window.location.origin}/prop/${proposal?.token}`;
     try {
@@ -207,6 +227,7 @@ export default function ProposalDetailPage() {
   const canReject = ['enviado', 'modificado_por_cliente', 'modificado_por_chef'].includes(proposal.status);
   const isSentOrExpired = ['enviado', 'expirado'].includes(proposal.status);
   const isTerminal = ['aceptado', 'rechazado'].includes(proposal.status);
+  const canChefEdit = proposal.status === 'enviado' || proposal.status === 'modificado_por_cliente';
   const clientViewed = !!proposal.viewedAt;
   const isActive = proposal.status === 'enviado' && clientViewed;
 
@@ -234,13 +255,19 @@ export default function ProposalDetailPage() {
               {t('proposals.detail.sendToClient')}
             </button>
           )}
-          {canApprove && (
+          {canChefEdit && !isEditing && (
+            <button onClick={() => setIsEditing(true)}
+              className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700">
+              {t('proposals.edit.editItems')}
+            </button>
+          )}
+          {canApprove && !isEditing && (
             <button onClick={handleApprove}
               className="rounded-md bg-green-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700">
               {t('proposals.detail.approve')}
             </button>
           )}
-          {canReject && (
+          {canReject && !isEditing && (
             <button onClick={handleReject}
               className="rounded-md bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700">
               {t('proposals.detail.reject')}
@@ -304,27 +331,40 @@ export default function ProposalDetailPage() {
         </div>
       )}
 
-      {proposal.items.length > 0 && (
+      {isEditing ? (
         <div className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold text-white/80">{t('proposals.detail.items')}</h2>
-          <div className={`flex flex-wrap gap-8 ${isSentOrExpired || isTerminal ? 'opacity-70' : ''}`}>
-            <div className="flex-1 min-w-[280px]">
-              <PricingBreakdown
-                items={proposal.items.map((i) => ({ _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel }))}
-                guestCount={proposal.guestCount}
-                categories={uniqueCategories}
-              />
-            </div>
-            <div className="flex-1 min-w-[200px] space-y-2">
-              {proposal.items.map((item) => (
-                <div key={item._id} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-300">{item.name}</span>
-                  <span className="text-gray-500">× {item.quantity}</span>
-                </div>
-              ))}
+          <ProposalPlateEditor
+            menuId={proposal.menuId._id}
+            initialItems={proposal.items}
+            guestCount={proposal.guestCount}
+            onSave={handleChefSave}
+            onCancel={() => setIsEditing(false)}
+            isSaving={isSaving}
+          />
+        </div>
+      ) : (
+        proposal.items.length > 0 && (
+          <div className="mt-8">
+            <h2 className="mb-4 text-lg font-semibold text-white/80">{t('proposals.detail.items')}</h2>
+            <div className={`flex flex-wrap gap-8 ${isSentOrExpired || isTerminal ? 'opacity-70' : ''}`}>
+              <div className="flex-1 min-w-[280px]">
+                <PricingBreakdown
+                  items={proposal.items.map((i) => ({ _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel }))}
+                  guestCount={proposal.guestCount}
+                  categories={uniqueCategories}
+                />
+              </div>
+              <div className="flex-1 min-w-[200px] space-y-2">
+                {proposal.items.map((item) => (
+                  <div key={item._id} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-300">{item.name}</span>
+                    <span className="text-gray-500">× {item.quantity}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )
       )}
 
       <div className="mt-8 flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 text-xs text-gray-500">

@@ -58,6 +58,14 @@ export class ProposalsController {
     return this.proposalsService.findByToken(token);
   }
 
+  @Patch(':token/items')
+  updateByToken(
+    @Param('token') token: string,
+    @Body() body: { items: any[]; guestCount?: number; reason?: string },
+  ) {
+    return this.proposalsService.updateByToken(token, body);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Query('status') status?: string) {

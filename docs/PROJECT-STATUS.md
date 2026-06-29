@@ -1,7 +1,7 @@
 # Project Status — AromaSabor
 
-> **Date:** 2026-06-25
-> **Phase:** Sprint 5 — Proposals (Stories 14 ✅, 15 ✅, 16 ✅)
+> **Date:** 2026-06-28
+> **Phase:** Sprint 6 — Bidirectional Editing (Stories 17-18 🏗️)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -60,9 +60,9 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 14 | Client access | Proposals | S5 | ✅
 | 15 | Expiration | Proposals | S5 | ✅
 | 16 | QR code | Proposals | S5 | ✅
-| 17 | Client modifies | Negotiation | S6 |
-| 18 | Chef modifies | Negotiation | S6 |
-| 19 | Approve / Reject | Negotiation | S7 |
+| 17 | Client modifies | Negotiation | S6 | 🏗️
+| 18 | Chef modifies | Negotiation | S6 | 🏗️
+| 19 | Approve / Reject | Negotiation | S7 | ✅
 | 20 | In-app notifications | Negotiation | S7 |
 
 ---
@@ -92,10 +92,10 @@ Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual
 Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) ✅
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access, Expiration, QR) ✅
-Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing)
-Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications)
+Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing) 🏗️
+Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications) 🏗️
                       ─────────
-                       10 weeks
+                        10 weeks
 ```
 
 ---
@@ -502,7 +502,75 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 ---
 
-## 21. What Success Looks Like (MVP)
+## 22. Sprint 5.5 — State Machine + i18n 🇪🇸
+
+| Story | Description | Status |
+|-------|-------------|--------|
+| 17-18 | Proposal state machine (7 states, all valid transitions) | ✅ |
+| 19 | Approve / Reject backend + frontend | ✅ |
+| — | Edit history with previousItems/newItems/reason snapshots | ✅ |
+| — | Frontend: status filter, monthly dashboard, history timeline | ✅ |
+| — | i18n español-first con toggle a inglés | ✅ |
+| — | Plate Builder Zustand refactor (type-safe, extracted) | ✅ |
+
+### Proposal State Machine
+
+**Backend** — `apps/api/src/modules/proposals/proposals.state-machine.ts`:
+- `TRANSITIONS` map covering all 7 states
+- `assertValidTransition()` with descriptive error messages
+
+**Transitions:**
+```
+borrador → enviado
+enviado → modificado_por_cliente | modificado_por_chef | aceptado | rechazado | expirado
+modificado_por_cliente → modificado_por_chef | aceptado | rechazado | expirado
+modificado_por_chef → modificado_por_cliente | aceptado | rechazado | expirado
+aceptado → (terminal)
+rechazado → (terminal)
+expirado → (terminal)
+```
+
+**Endpoints:**
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| PATCH | `/proposals/:id/approve` | JWT | Approve proposal |
+| PATCH | `/proposals/:id/reject` | JWT | Reject proposal |
+| PATCH | `/proposals/:id/status` | JWT | Generic transition with validation |
+| GET | `/proposals/id/:id/history` | JWT | Get edit history |
+| PATCH | `/proposals/:id` | JWT | Update proposal items (chef, with history) |
+| GET | `/proposals/:token` | No | Public lookup (auto-expire, set viewedAt) |
+
+### Edit History
+
+Each status transition or item edit records:
+- `modifiedBy`: `'chef' \| 'cliente'`
+- `modifiedAt`: timestamp
+- `previousItems[]`: snapshot before change
+- `newItems[]`: snapshot after change
+- `reason`: optional reason string
+
+### i18n
+
+Lightweight custom system (`apps/web/lib/i18n/`):
+- React Context + localStorage persistence
+- `useTranslation()` hook with `t('key', params)` function
+- Spanish default (`es.json`), English toggle (`en.json`)
+- `LanguageToggle` component in admin nav
+- All 12 pages migrated to `t()` calls
+
+### Plate Builder Refactor
+
+| File | Purpose |
+|------|---------|
+| `apps/web/store/plate-builder.ts` | Zustand store — extracted from page, type-safe |
+| `apps/web/lib/hooks/usePricing.ts` | `usePlatePricing()` hook — live quote calculation |
+| `apps/web/lib/types/plate.ts` | Shared TypeScript types |
+| `apps/web/components/plate-builder/` | Extracted: `CategoryAccordion`, `ItemCard`, `PricingBreakdown`, `EmptyPlate`, `SuccessModal` |
+| `apps/web/components/plate-builder/PlateBuilder.tsx` | Orchestrator — connects store → UI |
+
+---
+
+## 23. What Success Looks Like (MVP)
 
 - Chef can log in, create menus, add items
 - Client opens a link, sees a visual plate builder, builds a plate

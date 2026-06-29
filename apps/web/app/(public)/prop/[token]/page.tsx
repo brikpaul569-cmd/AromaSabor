@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
+import ProposalPlateEditor from '@/components/ProposalPlateEditor';
+import type { ProposalPlateEditorProps } from '@/components/ProposalPlateEditor';
 
 interface ProposalItem {
   _id: string;
@@ -67,6 +69,8 @@ export default function PublicProposalPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     api.get<Proposal>(`/proposals/${token}`)
@@ -77,6 +81,23 @@ export default function PublicProposalPage() {
       })
       .finally(() => setLoading(false));
   }, [token]);
+
+  const handleClientSave: ProposalPlateEditorProps['onSave'] = useCallback(
+    async (items, guestCount, reason) => {
+      setIsSaving(true);
+      try {
+        await api.patch(`/proposals/${token}/items`, { items, guestCount, reason });
+        const updated = await api.get<Proposal>(`/proposals/${token}`);
+        setProposal(updated);
+        setIsEditing(false);
+      } catch (err: any) {
+        setError(err.message || 'Failed to save changes');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [token],
+  );
 
   if (loading) {
     return (
@@ -108,6 +129,7 @@ export default function PublicProposalPage() {
 
   const isExpired = proposal.status === 'expirado';
   const isActive = proposal.status === 'enviado';
+  const canClientEdit = proposal.status === 'enviado' || proposal.status === 'modificado_por_chef';
   const uniqueCategories = [...new Map(proposal.items.map((i) => [i.categoryId, { id: i.categoryId, label: i.categoryLabel }])).values()];
 
   return (
@@ -131,59 +153,82 @@ export default function PublicProposalPage() {
             <h1 className="text-3xl font-bold text-white">{proposal.clientName}</h1>
             <p className="mt-1 text-sm text-gray-500">{formatDate(proposal.eventDate)}</p>
           </div>
-          <span className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
-            {t('status.' + proposal.status)}
-          </span>
-        </div>
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">{t('public.proposal.menu')}</p>
-            <p className="mt-1 text-sm font-medium text-white/80">{proposal.menuId?.name || '—'}</p>
-          </div>
-          <div className="rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">{t('public.proposal.guests')}</p>
-            <p className="mt-1 text-sm font-medium text-white/80">{proposal.guestCount}</p>
-          </div>
-          <div className="rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">{t('public.proposal.total')}</p>
-            <p className="mt-1 text-sm font-medium text-white/80">{formatPrice(proposal.quotation)}</p>
+          <div className="flex items-center gap-3">
+            <span className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
+              {t('status.' + proposal.status)}
+            </span>
+            {canClientEdit && !isEditing && (
+              <button onClick={() => setIsEditing(true)}
+                className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700">
+                {t('proposals.edit.editItems')}
+              </button>
+            )}
           </div>
         </div>
 
-        {proposal.notes && (
-          <div className="mt-4 rounded-lg bg-white/5 px-4 py-3">
-            <p className="text-xs text-gray-500">{t('public.proposal.notes')}</p>
-            <p className="mt-1 text-sm text-gray-300">{proposal.notes}</p>
-          </div>
-        )}
-
-        {proposal.items.length > 0 && (
+        {isEditing ? (
           <div className="mt-8">
-            <h2 className="mb-4 text-lg font-semibold text-white/80">{t('public.proposal.menuItems')}</h2>
-            <div className="flex flex-wrap gap-8">
-              <div className="flex-1 min-w-[280px]">
-                <PricingBreakdown
-                  items={proposal.items.map((i) => ({ _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel }))}
-                  guestCount={proposal.guestCount}
-                  categories={uniqueCategories}
-                />
+            <ProposalPlateEditor
+              menuId={proposal.menuId._id}
+              initialItems={proposal.items}
+              guestCount={proposal.guestCount}
+              onSave={handleClientSave}
+              onCancel={() => setIsEditing(false)}
+              isSaving={isSaving}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-lg bg-white/5 px-4 py-3">
+                <p className="text-xs text-gray-500">{t('public.proposal.menu')}</p>
+                <p className="mt-1 text-sm font-medium text-white/80">{proposal.menuId?.name || '—'}</p>
               </div>
-              <div className="flex-1 min-w-[200px] space-y-2">
-                {proposal.items.map((item) => (
-                  <div key={item._id} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-300">{item.name}</span>
-                    <span className="text-gray-500">× {item.quantity}</span>
-                  </div>
-                ))}
+              <div className="rounded-lg bg-white/5 px-4 py-3">
+                <p className="text-xs text-gray-500">{t('public.proposal.guests')}</p>
+                <p className="mt-1 text-sm font-medium text-white/80">{proposal.guestCount}</p>
+              </div>
+              <div className="rounded-lg bg-white/5 px-4 py-3">
+                <p className="text-xs text-gray-500">{t('public.proposal.total')}</p>
+                <p className="mt-1 text-sm font-medium text-white/80">{formatPrice(proposal.quotation)}</p>
               </div>
             </div>
-          </div>
-        )}
 
-        <div className="mt-8 border-t border-white/5 pt-4 text-center text-xs text-gray-600">
-          <p>{t('app.footer')}</p>
-        </div>
+            {proposal.notes && (
+              <div className="mt-4 rounded-lg bg-white/5 px-4 py-3">
+                <p className="text-xs text-gray-500">{t('public.proposal.notes')}</p>
+                <p className="mt-1 text-sm text-gray-300">{proposal.notes}</p>
+              </div>
+            )}
+
+            {proposal.items.length > 0 && (
+              <div className="mt-8">
+                <h2 className="mb-4 text-lg font-semibold text-white/80">{t('public.proposal.menuItems')}</h2>
+                <div className="flex flex-wrap gap-8">
+                  <div className="flex-1 min-w-[280px]">
+                    <PricingBreakdown
+                      items={proposal.items.map((i) => ({ _id: i._id, name: i.name, pricePerPortion: i.pricePerPortion, categoryLabel: i.categoryLabel }))}
+                      guestCount={proposal.guestCount}
+                      categories={uniqueCategories}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[200px] space-y-2">
+                    {proposal.items.map((item) => (
+                      <div key={item._id} className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300">{item.name}</span>
+                        <span className="text-gray-500">× {item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 border-t border-white/5 pt-4 text-center text-xs text-gray-600">
+              <p>{t('app.footer')}</p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
