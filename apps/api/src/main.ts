@@ -10,7 +10,9 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.use(cookieParser());
   app.enableCors({
-    origin: process.env.WEB_URL || 'http://localhost:3000',
+    origin: process.env.WEB_URL
+      ? process.env.WEB_URL.split(',').map((o) => o.trim())
+      : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));

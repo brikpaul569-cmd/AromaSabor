@@ -78,7 +78,7 @@ export default function MenuEditorPage() {
       if (err instanceof ApiClientError && err.statusCode === 401) {
         router.push('/login');
       } else {
-        setError('Failed to load menu');
+        setError(t('menus.editor.failedLoad'));
       }
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ export default function MenuEditorPage() {
       setMenu(updated);
       resetCatForm();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to add category');
+      setError(err instanceof ApiClientError ? err.message : t('menus.editor.failedAddCategory'));
     } finally {
       setAddingCat(false);
     }
@@ -130,7 +130,7 @@ export default function MenuEditorPage() {
       setMenu(updated);
       resetCatForm();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to update category');
+      setError(err instanceof ApiClientError ? err.message : t('menus.editor.failedUpdateCategory'));
     } finally {
       setAddingCat(false);
     }
@@ -141,7 +141,7 @@ export default function MenuEditorPage() {
       const updated = await api.delete<Menu>(`/menus/${id}/categories/${categoryId}`);
       setMenu(updated);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to delete category');
+      setError(err instanceof ApiClientError ? err.message : t('menus.editor.failedDeleteCategory'));
     }
   }
 
@@ -168,7 +168,7 @@ export default function MenuEditorPage() {
       setMenu(updated);
       resetItemForm();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to add item');
+      setError(err instanceof ApiClientError ? err.message : t('menus.editor.failedAddItem'));
     } finally {
       setAddingItem(false);
     }
@@ -190,7 +190,7 @@ export default function MenuEditorPage() {
       setMenu(updated);
       resetItemForm();
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to update item');
+      setError(err instanceof ApiClientError ? err.message : t('menus.editor.failedUpdateItem'));
     } finally {
       setAddingItem(false);
     }
@@ -201,7 +201,7 @@ export default function MenuEditorPage() {
       const updated = await api.delete<Menu>(`/menus/${id}/categories/${categoryId}/items/${itemId}`);
       setMenu(updated);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Failed to delete item');
+      setError(err instanceof ApiClientError ? err.message : t('menus.editor.failedDeleteItem'));
     }
   }
 
@@ -224,7 +224,7 @@ export default function MenuEditorPage() {
   return (
     <div className="p-8">
       <div className="flex items-center gap-4">
-        <button onClick={() => router.push('/menus')} className="text-sm text-gray-400 hover:text-white">&larr; {t('common.back')}</button>
+        <button onClick={() => router.push('/chef/menus')} className="text-sm text-gray-400 hover:text-white">&larr; {t('common.back')}</button>
       </div>
 
       <div className="mt-4 flex items-start justify-between">
@@ -245,7 +245,7 @@ export default function MenuEditorPage() {
               const updated = await api.patch<Menu>(`/menus/${id}/publish`, { isActive: !menu.isActive });
               setMenu(updated);
             } catch (err) {
-              setError(err instanceof ApiClientError ? err.message : 'Failed to update publish status');
+              setError(err instanceof ApiClientError ? err.message : t('menus.editor.failedPublish'));
             } finally {
               setPublishing(false);
             }
@@ -266,18 +266,18 @@ export default function MenuEditorPage() {
       {/* Category form */}
       {showCatForm && (
         <form onSubmit={editingCatId ? handleUpdateCategory : handleAddCategory} className="mt-6 rounded-xl bg-white/10 p-6">
-          <h2 className="text-lg font-semibold">{editingCatId ? 'Edit Category' : t('menus.editor.addCategory')}</h2>
+          <h2 className="text-lg font-semibold">{editingCatId ? t('menus.editor.editCategory') : t('menus.editor.addCategory')}</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div>
               <label className="text-sm text-gray-400">{t('menus.editor.slug')}</label>
               <input type="text" required value={catId} onChange={(e) => setCatId(e.target.value)}
-                placeholder="e.g. proteinas"
+                placeholder={t('menus.editor.slugPlaceholder')}
                 className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
             </div>
             <div>
               <label className="text-sm text-gray-400">{t('menus.editor.categoryLabel')}</label>
               <input type="text" required value={catLabel} onChange={(e) => setCatLabel(e.target.value)}
-                placeholder="e.g. Proteína"
+                placeholder={t('menus.editor.categoryPlaceholder')}
                 className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
             </div>
             <div>
@@ -289,7 +289,7 @@ export default function MenuEditorPage() {
           <div className="mt-4 flex gap-3">
             <button type="submit" disabled={addingCat}
               className="rounded-lg bg-white/20 px-6 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50">
-              {addingCat ? 'Saving...' : editingCatId ? t('common.save') : t('menus.editor.addCategory')}
+              {addingCat ? t('menus.editor.saving') : editingCatId ? t('common.save') : t('menus.editor.addCategory')}
             </button>
             <button type="button" onClick={resetCatForm}
               className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">{t('common.cancel')}</button>
@@ -339,7 +339,7 @@ export default function MenuEditorPage() {
                     {item.description && <p className="truncate text-xs text-gray-500">{item.description}</p>}
                   </div>
                   <div className="flex items-center gap-3 ml-4 shrink-0">
-                    {!item.isAvailable && <span className="text-xs text-red-400">Unavailable</span>}
+                    {!item.isAvailable && <span className="text-xs text-red-400">{t('menus.editor.unavailable')}</span>}
                     {item.portionGrams && <span className="text-xs text-gray-500">{item.portionGrams}{item.unit || 'gr'}</span>}
                     <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
                     <button onClick={() => startEditItem(cat._id, item)} className="text-xs text-gray-400 hover:text-white">{t('menus.editor.edit')}</button>
@@ -390,7 +390,7 @@ export default function MenuEditorPage() {
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
               </div>
               <div>
-                <label className="text-sm text-gray-400">Unit</label>
+                <label className="text-sm text-gray-400">{t('menus.editor.unit')}</label>
                 <select value={itemUnit} onChange={(e) => setItemUnit(e.target.value)}
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40">
                   <option value="gr" className="bg-gray-900">gr</option>
@@ -402,14 +402,14 @@ export default function MenuEditorPage() {
                 <label className="flex items-center gap-2 text-sm text-gray-400">
                   <input type="checkbox" checked={itemAvailable} onChange={(e) => setItemAvailable(e.target.checked)}
                     className="rounded bg-white/10" />
-                  Available
+                  {t('menus.editor.available')}
                 </label>
               </div>
             </div>
             <div className="mt-4 flex gap-3">
               <button type="submit" disabled={addingItem}
                 className="rounded-lg bg-white/20 px-6 py-2 text-sm font-medium transition hover:bg-white/30 disabled:opacity-50">
-                {addingItem ? 'Saving...' : editingItemId ? t('common.save') : t('menus.editor.addItem')}
+                {addingItem ? t('menus.editor.saving') : editingItemId ? t('common.save') : t('menus.editor.addItem')}
               </button>
               <button type="button" onClick={resetItemForm}
                 className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10">{t('common.cancel')}</button>

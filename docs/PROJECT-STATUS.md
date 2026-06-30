@@ -1,8 +1,8 @@
 # Project Status — AromaSabor
 
-> **Date:** 2026-06-29
+> **Date:** 2026-06-30
 > **Phase:** MVP Complete ✅ (all 20 stories implemented)
-> **Remaining:** E2E verification + images in bowl builder (deferred)
+> **Remaining:** Bug fixes, UX polish, E2E verification, images in bowl builder (deferred)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -642,46 +642,57 @@ Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipo
 
 ---
 
-## 25. Sprint 7 — Remaining Gaps ⚠️
+## 25. Revisions — 2026-06-30 ✅
 
-### Story 19 — Approve / Reject ✅
+### 🔧 Expiration Logic Overhaul
 
-| Side | Status | Detail |
-|------|--------|--------|
-| Chef dashboard (`/chef/proposals/:id`) | ✅ Done | Approve/reject buttons, state machine, history |
-| Client view (`/prop/[token]`) | ✅ Done | Approve/reject buttons via token-based endpoints |
+| Antes | Después |
+|-------|---------|
+| `findByToken()` auto-expiraba propuestas al cargarse (GET con side effect) | `findByToken()` es idempotente — no muta estado |
+| `approveByToken()` / `rejectByToken()` sin check de expiración | Nuevo `assertNotExpired()` se ejecuta antes de `assertValidTransition()` |
+| Frontend mostraba botones de aprobar/rechazar en propuestas vencidas | Botones ocultos cuando `isExpired === true` |
 
-### Story 20 — In-app notifications ✅
+**Archivos:** `apps/api/src/modules/proposals/proposals.service.ts`, `apps/web/app/(public)/prop/[token]/page.tsx`
 
-| Notification type | Service method | Status |
-|-------------------|---------------|--------|
-| `proposal_created` (submit from menu) | `submitFromMenu()` | ✅ |
-| `proposal_created` (chef creates) | `create()` | ✅ |
-| `proposal_updated` (send to client) | `send()` | ✅ |
-| Chef modifies proposal | `update()` | ✅ |
-| Client modifies proposal | `updateByToken()` | ✅ |
-| Proposal approved | `approve()` / `approveByToken()` | ✅ |
-| Proposal rejected | `reject()` / `rejectByToken()` | ✅ |
-| Proposal expired | `findByToken()` | ✅ |
+### 🔧 Replace en Plate Popover
 
-### What's done (this session)
+| Antes | Después |
+|-------|---------|
+| "Reemplazar" gris si la categoría tenía ≤1 item | Siempre disponible — navega al paso de esa categoría para elegir otro item |
+| Usaba `ReplaceSelector` modal (requería +2 items por categoría) | Se eliminó `replaceCategoryId`, `handleReplaceSelect` y `ReplaceSelector` de la página |
 
-| Item | Detail |
-|------|--------|
-| ✅ Client approve/reject buttons on `/prop/[token]` | Approve (green) + Reject (red) buttons in non-terminal, non-editing states |
-| ✅ `PATCH /proposals/:token/approve` | Public token-based approve endpoint |
-| ✅ `PATCH /proposals/:token/reject` | Public token-based reject endpoint |
-| ✅ Notifications on approve | `proposal_accepted` type |
-| ✅ Notifications on reject | `proposal_rejected` type |
-| ✅ Notifications on chef modify | `proposal_updated` type |
-| ✅ Notifications on client modify | `proposal_updated` type |
-| ✅ Notifications on expire | `proposal_expired` type on lookup |
-| ✅ Removed generic notification from `saveWithHistory()` | Each action now has exactly one typed notification |
+**Archivo:** `apps/web/app/(public)/menu/[slug]/page.tsx`
+
+### 🔧 Nueva Propuesta (Chef)
+
+| Antes | Después |
+|-------|---------|
+| Dropdown de menú con texto blanco sobre fondo blanco del OS | Options con `bg-gray-800 text-white` — visibles |
+| Aparecían menús sin items en el dropdown | Filtrados: solo menús con `categories[].items[].isAvailable` |
+| "Guardar borrador" | "Guardar propuesta" (nuevo key `saveProposal`) |
+| Silencio si el menú no tiene items | Mensaje: "Este menú no tiene ítems disponibles" |
+
+**Archivos:** `apps/web/app/chef/proposals/new/page.tsx`, `apps/web/lib/i18n/locales/{es,en}.json`
+
+### 🔧 Creación de Menú
+
+| Antes | Después |
+|-------|---------|
+| Crear menú → redirigía a lista `/chef/menus` | Crear menú → redirige al editor `/chef/menus/:id` para agregar categorías e items |
+
+**Archivo:** `apps/web/app/chef/menus/new/page.tsx`
+
+### 🔧 Script de limpieza
+
+| Archivo | Propósito |
+|---------|-----------|
+| `scripts/expire-stale-proposals.cjs` | Marca como `expirado` propuestas en `enviado` con `expiresAt` pasado. Idempotente. |
 
 ### Remaining
 
 1. **Images in bowl builder** — Deferred per user request
 2. **E2E test** — Verify full flow end-to-end
+3. **Volume pricing (Colombian pesos)** — Extra feature requested by user
 
 ### Route changes (already done ✅)
 

@@ -147,7 +147,7 @@ export default function ProposalDetailPage() {
       setProposal(updated);
       setShowConfirm(false);
     } catch (err: any) {
-      setSendError(err.message || 'Failed to send proposal');
+      setSendError(err.message || t('proposals.errors.failedSend'));
     } finally {
       setSending(false);
     }
@@ -158,7 +158,7 @@ export default function ProposalDetailPage() {
       const updated = await api.patch<Proposal>(`/proposals/${id}/approve`);
       setProposal(updated);
     } catch (err: any) {
-      setSendError(err.message || 'Failed to approve');
+      setSendError(err.message || t('proposals.errors.failedApprove'));
     }
   };
 
@@ -167,7 +167,7 @@ export default function ProposalDetailPage() {
       const updated = await api.patch<Proposal>(`/proposals/${id}/reject`);
       setProposal(updated);
     } catch (err: any) {
-      setSendError(err.message || 'Failed to reject');
+      setSendError(err.message || t('proposals.errors.failedReject'));
     }
   };
 
@@ -179,7 +179,7 @@ export default function ProposalDetailPage() {
         setProposal(updated);
         setIsEditing(false);
       } catch (err: any) {
-        setSendError(err.message || 'Failed to save changes');
+        setSendError(err.message || t('proposals.errors.failedSave'));
       } finally {
         setIsSaving(false);
       }

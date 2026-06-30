@@ -18,7 +18,10 @@ interface PlateItemPopoverProps {
   onClose: () => void;
 }
 
+import { useTranslation } from '@/lib/i18n';
+
 export default function PlateItemPopover({ item, canReplace, onRemove, onReplace, onClose }: PlateItemPopoverProps) {
+  const { t } = useTranslation();
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0" onClick={onClose} />
@@ -29,14 +32,14 @@ export default function PlateItemPopover({ item, canReplace, onRemove, onReplace
             onClick={onRemove}
             className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-300 transition hover:bg-red-500/30"
           >
-            Remove
+            {t('plate.popover.remove')}
           </button>
           <button
             onClick={onReplace}
             disabled={!canReplace}
             className="rounded-lg bg-blue-500/20 px-4 py-2 text-sm text-blue-300 transition hover:bg-blue-500/30 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Replace
+            {t('plate.popover.replace')}
           </button>
         </div>
       </div>

@@ -63,7 +63,7 @@ export default function MenusPage() {
       </motion.div>
 
       {menus.length === 0 ? (
-        <motion.div variants={fadeUp} className="mt-6 rounded-xl bg-surface p-12 text-center">
+        <motion.div variants={fadeUp} className="mt-6 rounded-xl border border-white/5 bg-surface p-12 text-center">
           <p className="text-gray-500">{t('menus.empty')}</p>
         </motion.div>
       ) : (
@@ -77,7 +77,7 @@ export default function MenusPage() {
             <motion.div key={menu._id} variants={fadeUp}>
               <button
                 onClick={() => router.push(`/chef/menus/${menu._id}`)}
-                className="group w-full rounded-xl bg-surface p-6 text-left transition-all duration-200 hover:bg-[#1E2533] hover:-translate-y-0.5"
+                className="group w-full rounded-xl border border-white/5 bg-surface p-6 text-left transition-all duration-200 hover:border-white/10 hover:bg-[#1E2533] hover:-translate-y-0.5"
               >
                 <h2 className="text-lg font-semibold text-white/90 group-hover:text-white transition-colors duration-200">{menu.name}</h2>
                 {menu.description && (

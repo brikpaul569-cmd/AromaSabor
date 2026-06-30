@@ -21,19 +21,22 @@ function formatPrice(price: number): string {
   return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
+import { useTranslation } from '@/lib/i18n';
+
 export default function ReplaceSelector({ categoryLabel, items, currentItemId, onSelect, onClose }: ReplaceSelectorProps) {
+  const { t } = useTranslation();
   const available = items.filter((i) => i._id !== currentItemId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-sm rounded-xl bg-gray-800 p-6 shadow-2xl ring-1 ring-white/20">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Replace {categoryLabel}</h3>
-          <button onClick={onClose} className="text-sm text-gray-400 hover:text-white">Close</button>
+          <h3 className="text-lg font-semibold">{t('plate.replace.title', { category: categoryLabel })}</h3>
+          <button onClick={onClose} className="text-sm text-gray-400 hover:text-white">{t('plate.replace.close')}</button>
         </div>
 
         {available.length === 0 ? (
-          <p className="py-4 text-center text-sm text-gray-500">No other items available in this category</p>
+          <p className="py-4 text-center text-sm text-gray-500">{t('plate.replace.noItems')}</p>
         ) : (
           <ul className="space-y-2">
             {available.map((item) => (
