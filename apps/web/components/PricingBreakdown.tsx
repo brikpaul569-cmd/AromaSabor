@@ -27,7 +27,7 @@ export default function PricingBreakdown({ items, guestCount, categories }: Pric
 
   if (items.length === 0) {
     return (
-      <div className="w-full max-w-xs rounded-lg bg-white/5 px-4 py-3 text-sm text-gray-500">
+      <div className="w-full max-w-xs rounded-xl border border-white/10 bg-neutral-950/50 px-4 py-3 text-sm text-gray-500 backdrop-blur-md">
         <p className="text-center">Select items to see pricing</p>
       </div>
     );
@@ -40,7 +40,7 @@ export default function PricingBreakdown({ items, guestCount, categories }: Pric
   }
 
   return (
-    <div className="w-full max-w-xs rounded-lg bg-white/5 px-4 py-3 text-sm">
+    <div className="w-full max-w-xs rounded-xl border border-white/10 bg-neutral-950/50 px-4 py-3 text-sm backdrop-blur-md">
       {categories.map((cat) => {
         const total = catTotals.get(cat.label);
         if (!total) return null;

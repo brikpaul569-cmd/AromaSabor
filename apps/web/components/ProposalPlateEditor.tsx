@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
@@ -253,7 +254,7 @@ export default function ProposalPlateEditor({
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-white/5 p-8 text-center">
+      <div className="rounded-xl border border-white/10 bg-neutral-950/50 p-8 text-center backdrop-blur-md">
         <p className="text-gray-500">{t('proposals.edit.loadingMenu')}</p>
       </div>
     );
@@ -261,7 +262,7 @@ export default function ProposalPlateEditor({
 
   if (loadError || !menu) {
     return (
-      <div className="rounded-lg bg-white/5 p-8 text-center">
+      <div className="rounded-xl border border-white/10 bg-neutral-950/50 p-8 text-center backdrop-blur-md">
         <p className="text-red-400">{loadError || t('common.error')}</p>
         <button
           onClick={onCancel}
@@ -276,7 +277,7 @@ export default function ProposalPlateEditor({
   /* ---- Main render ---- */
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+    <div className="rounded-xl border border-white/10 bg-neutral-950/50 p-6 backdrop-blur-md">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white/90">{t('proposals.edit.editing')}</h3>
@@ -297,8 +298,7 @@ export default function ProposalPlateEditor({
                 {/* Accordion header */}
                 <button
                   onClick={() => setActiveCategory(isOpen ? null : cat._id)}
-                  className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition hover:opacity-90"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                  className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-neutral-950/50 px-4 py-3 text-left backdrop-blur-sm transition hover:opacity-90"
                 >
                   <div className="flex items-center gap-3">
                     <span className={`h-3 w-3 rounded-full ${color}`} />
@@ -317,62 +317,73 @@ export default function ProposalPlateEditor({
                 </button>
 
                 {/* Accordion body */}
-                {isOpen && (
-                  <ul className="mt-2 space-y-2">
-                    {cat.items.filter((i) => i.isAvailable).length === 0 ? (
-                      <p className="px-4 py-2 text-sm text-gray-500">
-                        {t('plate.noItems')}
-                      </p>
-                    ) : (
-                      cat.items
-                        .filter((i) => i.isAvailable)
-                        .map((item) => {
-                          const selected = isSelected(cat._id, item._id);
-                          const cantSelect = !selected && remaining <= 0;
-                          return (
-                            <li key={item._id}>
-                              <button
-                                onClick={() => handleItemSelect(cat, item)}
-                                disabled={cantSelect}
-                                className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition ${
-                                  selected
-                                    ? 'bg-green-500/20 ring-1 ring-green-400/40'
-                                    : cantSelect
-                                      ? 'cursor-not-allowed bg-white/5 opacity-40'
-                                      : 'bg-white/5 hover:bg-white/10'
-                                }`}
-                              >
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-white/80">
-                                    {item.name}
-                                  </p>
-                                  {item.description && (
-                                    <p className="truncate text-xs text-gray-500">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="ml-4 flex shrink-0 items-center gap-3">
-                                  {item.portionGrams && (
-                                    <span className="text-xs text-gray-500">
-                                      {item.portionGrams}
-                                      {item.unit}
-                                    </span>
-                                  )}
-                                  <span className="text-sm font-medium text-white/70">
-                                    {formatPrice(item.pricePerPortion)}
-                                  </span>
-                                  <span className="text-xs">
-                                    {selected ? '✓' : '+'}
-                                  </span>
-                                </div>
-                              </button>
-                            </li>
-                          );
-                        })
-                    )}
-                  </ul>
-                )}
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="body"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <ul className="mt-2 space-y-2">
+                        {cat.items.filter((i) => i.isAvailable).length === 0 ? (
+                          <p className="px-4 py-2 text-sm text-gray-500">
+                            {t('plate.noItems')}
+                          </p>
+                        ) : (
+                          cat.items
+                            .filter((i) => i.isAvailable)
+                            .map((item) => {
+                              const selected = isSelected(cat._id, item._id);
+                              const cantSelect = !selected && remaining <= 0;
+                              return (
+                                <li key={item._id}>
+                                  <button
+                                    onClick={() => handleItemSelect(cat, item)}
+                                    disabled={cantSelect}
+                                    className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition ${
+                                      selected
+                                        ? 'bg-green-500/20 ring-1 ring-green-400/40'
+                                        : cantSelect
+                                          ? 'cursor-not-allowed bg-white/5 opacity-40'
+                                          : 'bg-white/5 hover:bg-white/10'
+                                    }`}
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium text-white/80">
+                                        {item.name}
+                                      </p>
+                                      {item.description && (
+                                        <p className="truncate text-xs text-gray-500">
+                                          {item.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="ml-4 flex shrink-0 items-center gap-3">
+                                      {item.portionGrams && (
+                                        <span className="text-xs text-gray-500">
+                                          {item.portionGrams}
+                                          {item.unit}
+                                        </span>
+                                      )}
+                                      <span className="text-sm font-medium text-white/70">
+                                        {formatPrice(item.pricePerPortion)}
+                                      </span>
+                                      <span className="text-xs">
+                                        {selected ? '✓' : '+'}
+                                      </span>
+                                    </div>
+                                  </button>
+                                </li>
+                              );
+                            })
+                        )}
+                      </ul>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}

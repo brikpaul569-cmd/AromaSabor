@@ -184,7 +184,7 @@ export default function PublicMenuPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950">
+      <div className="flex min-h-screen items-center justify-center bg-neutral-950 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.03)_0%,_transparent_70%)]">
         <p className="text-gray-500">{t('common.loading')}</p>
       </div>
     );
@@ -192,7 +192,7 @@ export default function PublicMenuPage() {
 
   if (notFound || !menu) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-950 p-8">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-950 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.03)_0%,_transparent_70%)] p-8">
         <h1 className="text-2xl font-bold text-white/60">{t('public.menu.notFound')}</h1>
         <p className="mt-2 text-sm text-gray-500">{t('public.menu.notFoundDesc')}</p>
       </div>
@@ -227,7 +227,7 @@ export default function PublicMenuPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-20 text-white">
+    <div className="min-h-screen bg-neutral-950 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.03)_0%,_transparent_70%)] pb-20 text-white">
       <div className="mx-auto max-w-5xl px-4 py-12">
         <header className="text-center">
           <h1 className="text-4xl font-bold">{menu.name}</h1>
@@ -424,7 +424,7 @@ export default function PublicMenuPage() {
       {/* Confirmation modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border border-white/10 bg-neutral-950/80 p-6 shadow-xl backdrop-blur-xl">
             <h3 className="text-lg font-semibold text-white">{t('plate.confirmTitle')}</h3>
             <p className="mt-1 text-sm text-gray-400">{menu.name}</p>
 
@@ -441,7 +441,7 @@ export default function PublicMenuPage() {
             )}
 
             {/* Pricing reference */}
-            <div className="mt-4 rounded-lg bg-white/5 px-4 py-3">
+            <div className="mt-4 rounded-lg border border-white/5 bg-neutral-950/50 px-4 py-3 backdrop-blur-sm">
               <PricingBreakdown items={pricingItems} guestCount={guestCount} categories={categoryOrder} />
             </div>
 
