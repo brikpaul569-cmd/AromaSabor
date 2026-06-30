@@ -8,6 +8,15 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        brand: {
+          DEFAULT: '#f59e0b',
+          light: '#fbbf24',
+          dark: '#d97706',
+          muted: 'rgba(245, 158, 11, 0.12)',
+        },
+        surface: '#131926',
+      },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'scale(0.9)' },
