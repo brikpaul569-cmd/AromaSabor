@@ -155,7 +155,7 @@ export default function PublicProposalPage() {
 
   if (!proposal) return null;
 
-  const isExpired = proposal.status === 'expirado';
+  const isExpired = proposal.status === 'expirado' || new Date(proposal.expiresAt) < new Date();
   const isActive = proposal.status === 'enviado';
   const canClientEdit = proposal.status === 'enviado' || proposal.status === 'modificado_por_chef';
   const canClientApprove = ['enviado', 'modificado_por_chef', 'modificado_por_cliente'].includes(proposal.status);

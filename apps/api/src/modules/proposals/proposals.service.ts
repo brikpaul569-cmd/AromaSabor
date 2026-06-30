@@ -219,6 +219,7 @@ export class ProposalsService {
     assertValidTransition(proposal.status, 'aceptado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'aceptado';
+    proposal.expiresAt = new Date(); // expire the link so QR cannot be reused
     const saved = await this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal approved');
     await this.notificationsService.create({
       proposalId: proposal._id,
@@ -250,6 +251,7 @@ export class ProposalsService {
     assertValidTransition(proposal.status, 'aceptado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'aceptado';
+    proposal.expiresAt = new Date(); // expire the link so QR cannot be reused
     const saved = await this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal approved');
     await this.notificationsService.create({
       proposalId: proposal._id,
