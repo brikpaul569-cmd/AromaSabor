@@ -70,7 +70,7 @@ export default function ProposalsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t('proposals.title')}</h1>
         <Link
-          href="/proposals/new"
+          href="/chef/proposals/new"
           className="rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
         >
           {t('proposals.new')}

@@ -24,9 +24,9 @@ interface AdminSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { href: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-  { href: '/menus', labelKey: 'nav.menus', icon: UtensilsCrossed },
-  { href: '/proposals', labelKey: 'nav.proposals', icon: FileText },
+  { href: '/chef/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { href: '/chef/menus', labelKey: 'nav.menus', icon: UtensilsCrossed },
+  { href: '/chef/proposals', labelKey: 'nav.proposals', icon: FileText },
 ] as const;
 
 export default function AdminSidebar({ user }: AdminSidebarProps) {
@@ -35,7 +35,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   const { t } = useTranslation();
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard';
+    if (href === '/chef/dashboard') return pathname === '/chef/dashboard';
     return pathname.startsWith(href);
   };
 

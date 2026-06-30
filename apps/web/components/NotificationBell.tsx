@@ -152,7 +152,7 @@ export default function NotificationBell() {
               notifications.slice(0, 20).map((n) => (
                 <a
                   key={n._id}
-                  href={`/proposals/${n.proposalId}`}
+                  href={`/chef/proposals/${n.proposalId}`}
                   onClick={() => {
                     if (!n.read) markRead(n._id);
                   }}

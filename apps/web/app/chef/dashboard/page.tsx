@@ -60,15 +60,15 @@ export default function DashboardPage() {
 
       {/* Stats cards */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Link href="/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
+        <Link href="/chef/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
           <p className="text-3xl font-bold">{totalProposals}</p>
           <p className="mt-1 text-sm text-gray-500">{t('dashboard.totalProposals')}</p>
         </Link>
-        <Link href="/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
+        <Link href="/chef/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
           <p className="text-3xl font-bold text-blue-300">{sentCount}</p>
           <p className="mt-1 text-sm text-gray-500">{t('dashboard.sent')}</p>
         </Link>
-        <Link href="/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
+        <Link href="/chef/proposals" className="rounded-xl bg-white/5 p-6 transition hover:bg-white/10">
           <p className="text-3xl font-bold text-gray-300">{draftCount}</p>
           <p className="mt-1 text-sm text-gray-500">{t('dashboard.drafts')}</p>
         </Link>
@@ -78,7 +78,7 @@ export default function DashboardPage() {
       <div className="mt-12">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white/80">{t('dashboard.recentProposals')}</h2>
-          <Link href="/proposals" className="text-sm text-gray-500 hover:text-white">{t('common.viewAll')}</Link>
+          <Link href="/chef/proposals" className="text-sm text-gray-500 hover:text-white">{t('common.viewAll')}</Link>
         </div>
 
         {recent.length === 0 ? (
