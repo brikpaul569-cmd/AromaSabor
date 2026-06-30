@@ -53,6 +53,11 @@ export class ProposalsController {
     return this.proposalsService.getHistory(id);
   }
 
+  @Get('code/:shortCode')
+  findByShortCode(@Param('shortCode') shortCode: string) {
+    return this.proposalsService.findByShortCode(shortCode);
+  }
+
   @Get(':token')
   findByToken(@Param('token') token: string) {
     return this.proposalsService.findByToken(token);

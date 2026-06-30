@@ -199,6 +199,70 @@ describe('Proposals — State Machine', () => {
     expect(historyRes.body[1].reason).toBe('Cambio de opinión');
   });
 
+  // ── SHORT CODE LOOKUP ─────────────────────────────────────────────────
+
+  it('GET /api/proposals/code/:shortCode — returns proposal by short code', async () => {
+    // Create a proposal first
+    const prop = await http
+      .post('/api/proposals')
+      .send({
+        menuId,
+        clientName: 'ShortCode Test',
+        eventDate: '2026-12-15',
+        guestCount: 20,
+        items: [{ name: 'Ensalada', categoryId: 'entrada', categoryLabel: 'Entrada', pricePerPortion: 5000, quantity: 1 }],
+      })
+      .expect(201);
+
+    await http.patch(`/api/proposals/${prop.body._id}/send`).expect(200);
+
+    // Fetch by token to trigger lazy shortCode generation
+    const byToken = await http.get(`/api/proposals/${prop.body.token}`).expect(200);
+    expect(byToken.body.shortCode).toBeDefined();
+    expect(byToken.body.shortCode).toHaveLength(7);
+
+    // Fetch by shortCode
+    const byCode = await http.get(`/api/proposals/code/${byToken.body.shortCode}`).expect(200);
+    expect(byCode.body._id).toBe(prop.body._id);
+    expect(byCode.body.clientName).toBe('ShortCode Test');
+  });
+
+  it('GET /api/proposals/code/:shortCode — returns 404 for invalid code', async () => {
+    await http
+      .get('/api/proposals/code/ZZZZZZZ')
+      .expect(404);
+  });
+
+  // ── LAZY SHORT CODE GENERATION ──────────────────────────────────────
+
+  it('GET /api/proposals/:token — lazy-generates shortCode when missing', async () => {
+    // Create a proposal
+    const prop = await http
+      .post('/api/proposals')
+      .send({
+        menuId,
+        clientName: 'LazyCode Test',
+        eventDate: '2026-12-20',
+        guestCount: 10,
+        items: [{ name: 'Ensalada', categoryId: 'entrada', categoryLabel: 'Entrada', pricePerPortion: 5000, quantity: 1 }],
+      })
+      .expect(201);
+
+    await http.patch(`/api/proposals/${prop.body._id}/send`).expect(200);
+
+    // Verify shortCode is NOT yet set (created without one)
+    expect(prop.body.shortCode).toBeUndefined();
+
+    // Fetch by token — should generate shortCode lazily
+    const byToken = await http.get(`/api/proposals/${prop.body.token}`).expect(200);
+    expect(byToken.body.shortCode).toBeDefined();
+    expect(byToken.body.shortCode).toHaveLength(7);
+
+    // Second fetch should return the same shortCode (no duplicate generation)
+    const byToken2 = await http.get(`/api/proposals/${prop.body.token}`).expect(200);
+    expect(byToken2.body.shortCode).toBe(byToken.body.shortCode);
+  });
+
   // ── PUBLIC TOKEN LOOKUP MARKS AS VIEWED & EXPIRES ─────────────────────
 
   it('GET /api/proposals/:token — marks as viewed', async () => {

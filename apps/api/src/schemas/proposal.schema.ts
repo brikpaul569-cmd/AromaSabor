@@ -130,6 +130,9 @@ export class Proposal {
   @Prop({ required: true })
   expiresAt!: Date;
 
+  @Prop({ unique: true, sparse: true })
+  shortCode?: string;
+
   @Prop()
   viewedAt?: Date;
 
@@ -147,3 +150,4 @@ export const ProposalSchema = SchemaFactory.createForClass(Proposal);
 ProposalSchema.index({ token: 1 }, { unique: true });
 ProposalSchema.index({ status: 1, expiresAt: 1 });
 ProposalSchema.index({ createdBy: 1 });
+

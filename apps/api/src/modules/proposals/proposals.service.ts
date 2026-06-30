@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { calculateQuotation } from '@aromasabor/utils';
 import { assertValidTransition } from './proposals.state-machine';
+import { generateBase58 } from '../../utils/base58';
 
 interface MenuCategoryItem {
   _id?: any;
@@ -39,6 +40,16 @@ export class ProposalsService {
     @InjectModel(Proposal.name) private proposalModel: Model<Proposal>,
     private notificationsService: NotificationsService,
   ) {}
+
+  async generateShortCode(): Promise<string> {
+    const MAX_ATTEMPTS = 10;
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      const code = generateBase58();
+      const exists = await this.proposalModel.findOne({ shortCode: code }, { _id: 1 });
+      if (!exists) return code;
+    }
+    throw new ConflictException('Failed to generate unique short code after multiple attempts');
+  }
 
   private recalculate(proposal: Proposal): { pricePerPlate: number; quotation: number } {
     const pricePerPlate = proposal.items.reduce((sum, i) => sum + i.pricePerPortion, 0);
@@ -189,7 +200,21 @@ export class ProposalsService {
     if (!proposal.viewedAt) {
       proposal.viewedAt = new Date();
     }
+    // Lazy shortCode generation — ensures existing proposals get a short code on first view
+    if (!proposal.shortCode) {
+      proposal.shortCode = await this.generateShortCode();
+    }
     await proposal.save();
+    return proposal;
+  }
+
+  async findByShortCode(shortCode: string) {
+    const proposal = await this.proposalModel.findOne({ shortCode }).populate('menuId');
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    if (!proposal.viewedAt) {
+      proposal.viewedAt = new Date();
+      await proposal.save();
+    }
     return proposal;
   }
 
