@@ -71,6 +71,8 @@ export default function PublicProposalPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [actionMsg, setActionMsg] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<Proposal>(`/proposals/${token}`)
@@ -98,6 +100,32 @@ export default function PublicProposalPage() {
     },
     [token],
   );
+
+  const handleApprove = useCallback(async () => {
+    setIsApproving(true);
+    setActionMsg(null);
+    try {
+      const updated = await api.patch<Proposal>(`/proposals/${token}/approve`);
+      setProposal(updated);
+    } catch (err: any) {
+      setActionMsg(err.message || 'Error al aprobar');
+    } finally {
+      setIsApproving(false);
+    }
+  }, [token]);
+
+  const handleReject = useCallback(async () => {
+    setIsApproving(true);
+    setActionMsg(null);
+    try {
+      const updated = await api.patch<Proposal>(`/proposals/${token}/reject`);
+      setProposal(updated);
+    } catch (err: any) {
+      setActionMsg(err.message || 'Error al rechazar');
+    } finally {
+      setIsApproving(false);
+    }
+  }, [token]);
 
   if (loading) {
     return (
@@ -130,6 +158,8 @@ export default function PublicProposalPage() {
   const isExpired = proposal.status === 'expirado';
   const isActive = proposal.status === 'enviado';
   const canClientEdit = proposal.status === 'enviado' || proposal.status === 'modificado_por_chef';
+  const canClientApprove = ['enviado', 'modificado_por_chef', 'modificado_por_cliente'].includes(proposal.status);
+  const isTerminal = ['aceptado', 'rechazado', 'expirado'].includes(proposal.status);
   const uniqueCategories = [...new Map(proposal.items.map((i) => [i.categoryId, { id: i.categoryId, label: i.categoryLabel }])).values()];
 
   return (
@@ -163,10 +193,35 @@ export default function PublicProposalPage() {
                 {t('proposals.edit.editItems')}
               </button>
             )}
+            {canClientApprove && !isEditing && !isTerminal && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleReject}
+                  disabled={isApproving}
+                  className="rounded-md bg-red-600/80 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+                >
+                  {isApproving ? '...' : t('proposals.detail.reject')}
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={isApproving}
+                  className="rounded-md bg-green-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:opacity-50"
+                >
+                  {isApproving ? '...' : t('proposals.detail.approve')}
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+      </div>
 
-        {isEditing ? (
+      {actionMsg && (
+        <div className="mt-4 rounded-md bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {actionMsg}
+          <button onClick={() => setActionMsg(null)} className="ml-3 underline">Dismiss</button>
+        </div>
+      )}
+
+      {isEditing ? (
           <div className="mt-8">
             <ProposalPlateEditor
               menuId={proposal.menuId._id}

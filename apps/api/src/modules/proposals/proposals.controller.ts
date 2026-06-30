@@ -66,6 +66,16 @@ export class ProposalsController {
     return this.proposalsService.updateByToken(token, body);
   }
 
+  @Patch(':token/approve')
+  approveByToken(@Param('token') token: string) {
+    return this.proposalsService.approveByToken(token);
+  }
+
+  @Patch(':token/reject')
+  rejectByToken(@Param('token') token: string) {
+    return this.proposalsService.rejectByToken(token);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Query('status') status?: string) {

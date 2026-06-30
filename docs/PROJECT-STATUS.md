@@ -1,7 +1,8 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-29
-> **Phase:** Sprint 7 — Notifications (Story 20 🏗️)
+> **Phase:** MVP Complete ✅ (all 20 stories implemented)
+> **Remaining:** E2E verification + images in bowl builder (deferred)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -63,7 +64,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 17 | Client modifies | Negotiation | S6 | ✅
 | 18 | Chef modifies | Negotiation | S6 | ✅
 | 19 | Approve / Reject | Negotiation | S7 | ✅
-| 20 | In-app notifications | Negotiation | S7 |
+| 20 | In-app notifications | Negotiation | S7 | ✅
 
 ---
 
@@ -93,7 +94,7 @@ Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing)
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access, Expiration, QR) ✅
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing) ✅
-Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications) 🏗️
+Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications) ✅
                       ─────────
                         10 weeks
 ```
@@ -637,3 +638,55 @@ Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipo
 - ✅ Guest count selector
 - ✅ All pricing logic (per-portion, IVA, total)
 - ✅ API endpoints and schemas
+
+---
+
+## 25. Sprint 7 — Remaining Gaps ⚠️
+
+### Story 19 — Approve / Reject ✅
+
+| Side | Status | Detail |
+|------|--------|--------|
+| Chef dashboard (`/chef/proposals/:id`) | ✅ Done | Approve/reject buttons, state machine, history |
+| Client view (`/prop/[token]`) | ✅ Done | Approve/reject buttons via token-based endpoints |
+
+### Story 20 — In-app notifications ✅
+
+| Notification type | Service method | Status |
+|-------------------|---------------|--------|
+| `proposal_created` (submit from menu) | `submitFromMenu()` | ✅ |
+| `proposal_created` (chef creates) | `create()` | ✅ |
+| `proposal_updated` (send to client) | `send()` | ✅ |
+| Chef modifies proposal | `update()` | ✅ |
+| Client modifies proposal | `updateByToken()` | ✅ |
+| Proposal approved | `approve()` / `approveByToken()` | ✅ |
+| Proposal rejected | `reject()` / `rejectByToken()` | ✅ |
+| Proposal expired | `findByToken()` | ✅ |
+
+### What's done (this session)
+
+| Item | Detail |
+|------|--------|
+| ✅ Client approve/reject buttons on `/prop/[token]` | Approve (green) + Reject (red) buttons in non-terminal, non-editing states |
+| ✅ `PATCH /proposals/:token/approve` | Public token-based approve endpoint |
+| ✅ `PATCH /proposals/:token/reject` | Public token-based reject endpoint |
+| ✅ Notifications on approve | `proposal_accepted` type |
+| ✅ Notifications on reject | `proposal_rejected` type |
+| ✅ Notifications on chef modify | `proposal_updated` type |
+| ✅ Notifications on client modify | `proposal_updated` type |
+| ✅ Notifications on expire | `proposal_expired` type on lookup |
+| ✅ Removed generic notification from `saveWithHistory()` | Each action now has exactly one typed notification |
+
+### Remaining
+
+1. **Images in bowl builder** — Deferred per user request
+2. **E2E test** — Verify full flow end-to-end
+
+### Route changes (already done ✅)
+
+| Old route | New route |
+|-----------|-----------|
+| `/dashboard` | `/chef/dashboard` |
+| `/proposals` | `/chef/proposals` |
+| `/menus` | `/chef/menus` |
+| `(admin)/login` | `/login` |

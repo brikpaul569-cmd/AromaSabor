@@ -67,11 +67,6 @@ export class ProposalsService {
         reason,
       } as any);
     }
-    await this.notificationsService.create({
-      proposalId: proposal._id,
-      type: 'proposal_updated',
-      message: `Proposal for ${proposal.clientName} is now "${proposal.status}"`,
-    });
     return proposal.save();
   }
 
@@ -181,6 +176,11 @@ export class ProposalsService {
     if (!proposal) throw new NotFoundException('Proposal not found');
     if (proposal.status === 'enviado' && proposal.expiresAt < new Date()) {
       proposal.status = 'expirado';
+      await this.notificationsService.create({
+        proposalId: proposal._id,
+        type: 'proposal_expired',
+        message: `Propuesta para ${proposal.clientName} ha expirado`,
+      });
     }
     if (!proposal.viewedAt) {
       proposal.viewedAt = new Date();
@@ -203,7 +203,13 @@ export class ProposalsService {
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'enviado';
     proposal.expiresAt = new Date(Date.now() + 20 * 60 * 1000);
-    return this.saveWithHistory(proposal, 'chef', previousItems, 'Sent to client');
+    const saved = await this.saveWithHistory(proposal, 'chef', previousItems, 'Sent to client');
+    await this.notificationsService.create({
+      proposalId: proposal._id,
+      type: 'proposal_updated',
+      message: `Propuesta para ${proposal.clientName} enviada al cliente`,
+    });
+    return saved;
   }
 
   async approve(id: string) {
@@ -213,7 +219,13 @@ export class ProposalsService {
     assertValidTransition(proposal.status, 'aceptado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'aceptado';
-    return this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal approved');
+    const saved = await this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal approved');
+    await this.notificationsService.create({
+      proposalId: proposal._id,
+      type: 'proposal_accepted',
+      message: `Propuesta para ${proposal.clientName} fue aceptada`,
+    });
+    return saved;
   }
 
   async reject(id: string) {
@@ -223,7 +235,43 @@ export class ProposalsService {
     assertValidTransition(proposal.status, 'rechazado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'rechazado';
-    return this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal rejected');
+    const saved = await this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal rejected');
+    await this.notificationsService.create({
+      proposalId: proposal._id,
+      type: 'proposal_rejected',
+      message: `Propuesta para ${proposal.clientName} fue rechazada`,
+    });
+    return saved;
+  }
+
+  async approveByToken(token: string) {
+    const proposal = await this.proposalModel.findOne({ token });
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    assertValidTransition(proposal.status, 'aceptado');
+    const previousItems = [...proposal.items] as ProposalItem[];
+    proposal.status = 'aceptado';
+    const saved = await this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal approved');
+    await this.notificationsService.create({
+      proposalId: proposal._id,
+      type: 'proposal_accepted',
+      message: `Propuesta para ${proposal.clientName} fue aceptada`,
+    });
+    return saved;
+  }
+
+  async rejectByToken(token: string) {
+    const proposal = await this.proposalModel.findOne({ token });
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    assertValidTransition(proposal.status, 'rechazado');
+    const previousItems = [...proposal.items] as ProposalItem[];
+    proposal.status = 'rechazado';
+    const saved = await this.saveWithHistory(proposal, 'cliente', previousItems, 'Proposal rejected');
+    await this.notificationsService.create({
+      proposalId: proposal._id,
+      type: 'proposal_rejected',
+      message: `Propuesta para ${proposal.clientName} fue rechazada`,
+    });
+    return saved;
   }
 
   async transitionStatus(id: string, toStatus: string, modifiedBy: 'chef' | 'cliente', reason?: string) {
@@ -292,7 +340,15 @@ export class ProposalsService {
         proposal.status = 'modificado_por_chef';
       }
     }
-    return this.saveWithHistory(proposal, 'chef', previousItems, reason);
+    const saved = await this.saveWithHistory(proposal, 'chef', previousItems, reason);
+    if (data.items) {
+      await this.notificationsService.create({
+        proposalId: proposal._id,
+        type: 'proposal_updated',
+        message: `El chef modificó la propuesta para ${proposal.clientName}`,
+      });
+    }
+    return saved;
   }
 
   async updateByToken(
@@ -355,7 +411,13 @@ export class ProposalsService {
     assertValidTransition(proposal.status, 'modificado_por_cliente');
     proposal.status = 'modificado_por_cliente';
 
-    return this.saveWithHistory(proposal, 'cliente', previousItems, updateData.reason);
+    const saved = await this.saveWithHistory(proposal, 'cliente', previousItems, updateData.reason);
+    await this.notificationsService.create({
+      proposalId: proposal._id,
+      type: 'proposal_updated',
+      message: `El cliente modificó la propuesta para ${proposal.clientName}`,
+    });
+    return saved;
   }
 
   async remove(id: string) {
