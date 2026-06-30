@@ -21,6 +21,7 @@ interface AdminUser {
 
 interface AdminSidebarProps {
   user: AdminUser | null;
+  onNavigate?: () => void;
 }
 
 const NAV_ITEMS = [
@@ -29,7 +30,7 @@ const NAV_ITEMS = [
   { href: '/chef/proposals', labelKey: 'nav.proposals', icon: FileText },
 ] as const;
 
-export default function AdminSidebar({ user }: AdminSidebarProps) {
+export default function AdminSidebar({ user, onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useTranslation();
@@ -65,6 +66,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 active
                   ? 'bg-brand-muted text-brand font-semibold'

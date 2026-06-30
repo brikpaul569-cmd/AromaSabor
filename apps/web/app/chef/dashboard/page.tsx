@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import {
   CalendarDays,
   ClipboardList,
@@ -84,16 +85,33 @@ export default function DashboardPage() {
   const draftCount = proposals.filter((p) => p.status === 'borrador').length;
   const recent = proposals.slice(0, 5);
 
+  const stagger = {
+    hidden: { opacity: 0 },
+    visible: { transition: { staggerChildren: 0.05 } },
+  };
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+  };
+
   return (
-    <div className="p-8">
+    <motion.div
+      className="p-8"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: { transition: { staggerChildren: 0.08 } },
+      }}
+    >
       {/* Welcome banner */}
       {showWelcome && (
-        <div className="mb-6 rounded-xl border border-green-500/20 bg-green-500/10 px-5 py-4">
+        <motion.div variants={fadeUp} className="mb-6 rounded-xl border border-green-500/20 bg-green-500/10 px-5 py-4">
           <p className="text-sm font-medium text-green-300">{t('auth.welcomeNew')}</p>
-        </div>
+        </motion.div>
       )}
 
-      <div className="flex items-start justify-between">
+      <motion.div variants={fadeUp} className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
           {admin && (
@@ -110,10 +128,10 @@ export default function DashboardPage() {
             })}
           </span>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stats cards */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <motion.div variants={fadeUp} className="mt-8 grid gap-4 sm:grid-cols-3">
         <Link href="/chef/proposals" className="group relative rounded-xl bg-surface p-6 transition-all duration-200 hover:bg-white/[0.04] hover:-translate-y-0.5">
           <ClipboardList className="absolute right-4 top-4 h-5 w-5 text-white/10 group-hover:text-brand/30 transition-colors duration-200" />
           <p className="text-3xl font-bold text-white">{totalProposals}</p>
@@ -129,17 +147,17 @@ export default function DashboardPage() {
           <p className="text-3xl font-bold text-white/60">{draftCount}</p>
           <p className="mt-1 text-sm text-gray-500">{t('dashboard.drafts')}</p>
         </Link>
-      </div>
+      </motion.div>
 
       {/* Recent proposals */}
-      <div className="mt-12">
+      <motion.div variants={fadeUp} className="mt-12">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white/80">{t('dashboard.recentProposals')}</h2>
           <Link href="/chef/proposals" className="text-sm text-gray-500 hover:text-white transition-colors duration-200">{t('common.viewAll')}</Link>
         </div>
 
         {recent.length === 0 ? (
-          <div className="mt-4 rounded-xl bg-surface p-8 text-center">
+          <motion.div variants={fadeUp} className="mt-4 rounded-xl bg-surface p-8 text-center">
             <p className="text-gray-500">{t('dashboard.noProposals')}</p>
             <Link
               href="/chef/proposals/new"
@@ -147,25 +165,31 @@ export default function DashboardPage() {
             >
               {t('dashboard.createFirst')}
             </Link>
-          </div>
+          </motion.div>
         ) : (
-          <div className="mt-4 space-y-3">
-            {recent.map((p, i) => (
-              <Link
-                key={p._id}
-                href={`/chef/proposals/${p._id}`}
-                className="flex items-center justify-between rounded-xl bg-surface px-5 py-4 transition-all duration-200 hover:bg-[#1E2533] hover:-translate-y-0.5"
-              >
-                <span className="text-sm font-medium text-white/90">{p.clientName}</span>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-400">{formatPrice(p.quotation)}</span>
-                  <StatusBadge status={p.status} />
-                </div>
-              </Link>
+          <motion.div
+            className="mt-4 space-y-3"
+            variants={stagger}
+            initial="hidden"
+            animate="visible"
+          >
+            {recent.map((p) => (
+              <motion.div key={p._id} variants={fadeUp}>
+                <Link
+                  href={`/chef/proposals/${p._id}`}
+                  className="flex items-center justify-between rounded-xl bg-surface px-5 py-4 transition-all duration-200 hover:bg-[#1E2533] hover:-translate-y-0.5"
+                >
+                  <span className="text-sm font-medium text-white/90">{p.clientName}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-400">{formatPrice(p.quotation)}</span>
+                    <StatusBadge status={p.status} />
+                  </div>
+                </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

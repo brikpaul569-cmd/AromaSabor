@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 
@@ -65,9 +66,26 @@ export default function ProposalsPage() {
       .reduce((sum, p) => sum + (p.totalPrice || p.quotation), 0);
   }, [proposals]);
 
+  const stagger = {
+    hidden: { opacity: 0 },
+    visible: { transition: { staggerChildren: 0.04 } },
+  };
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  };
+
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
+    <motion.div
+      className="p-8"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: { transition: { staggerChildren: 0.08 } },
+      }}
+    >
+      <motion.div variants={fadeUp} className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('proposals.title')}</h1>
           <p className="mt-1.5 text-sm text-gray-500">{proposals.length} {t('dashboard.totalProposals')}</p>
@@ -78,16 +96,16 @@ export default function ProposalsPage() {
         >
           + {t('proposals.new')}
         </Link>
-      </div>
+      </motion.div>
 
       {monthlyTotal > 0 && (
-        <div className="mt-6 rounded-xl bg-surface px-5 py-4">
+        <motion.div variants={fadeUp} className="mt-6 rounded-xl bg-surface px-5 py-4">
           <p className="text-xs text-green-400">{t('proposals.approvedThisMonth')}</p>
           <p className="mt-1 text-2xl font-bold text-green-300">{formatPrice(monthlyTotal)}</p>
-        </div>
+        </motion.div>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <motion.div variants={fadeUp} className="mt-6 flex flex-wrap gap-2">
         {FILTER_OPTIONS.map((f) => (
           <button
             key={f}
@@ -101,38 +119,44 @@ export default function ProposalsPage() {
             {f === 'all' ? t('proposals.filterAll') : t('status.' + f)}
           </button>
         ))}
-      </div>
+      </motion.div>
 
       {loading ? (
-        <p className="mt-8 text-gray-500">{t('common.loading')}</p>
+        <motion.p variants={fadeUp} className="mt-8 text-gray-500">{t('common.loading')}</motion.p>
       ) : filtered.length === 0 ? (
-        <div className="mt-6 rounded-xl bg-surface p-12 text-center">
+        <motion.div variants={fadeUp} className="mt-6 rounded-xl bg-surface p-12 text-center">
           <p className="text-gray-500">{t('proposals.noMatch')}</p>
-        </div>
+        </motion.div>
       ) : (
-        <div className="mt-6 space-y-3">
+        <motion.div
+          className="mt-6 space-y-3"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+        >
           {filtered.map((p) => (
-            <Link
-              key={p._id}
-              href={`/chef/proposals/${p._id}`}
-              className="flex items-center justify-between rounded-xl bg-surface px-5 py-4 transition-all duration-200 hover:bg-[#1E2533] hover:-translate-y-0.5"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-white/90">{p.clientName}</p>
-                <p className="mt-0.5 text-sm text-gray-500">
-                  {formatDate(p.eventDate)} · {p.items.length} {t('menus.editor.items')} · {p.guestCount} {t('proposals.detail.guests')}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-400">{formatPrice(p.quotation)}</span>
-                <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || 'bg-white/5 text-gray-400'}`}>
-                  {t('status.' + p.status)}
-                </span>
-              </div>
-            </Link>
+            <motion.div key={p._id} variants={fadeUp}>
+              <Link
+                href={`/chef/proposals/${p._id}`}
+                className="flex items-center justify-between rounded-xl bg-surface px-5 py-4 transition-all duration-200 hover:bg-[#1E2533] hover:-translate-y-0.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-white/90">{p.clientName}</p>
+                  <p className="mt-0.5 text-sm text-gray-500">
+                    {formatDate(p.eventDate)} · {p.items.length} {t('menus.editor.items')} · {p.guestCount} {t('proposals.detail.guests')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-400">{formatPrice(p.quotation)}</span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || 'bg-white/5 text-gray-400'}`}>
+                    {t('status.' + p.status)}
+                  </span>
+                </div>
+              </Link>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
