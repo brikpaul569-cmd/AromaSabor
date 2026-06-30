@@ -171,17 +171,21 @@ export class ProposalsService {
     return saved;
   }
 
+  private assertNotExpired(proposal: ProposalDocument): void {
+    if (proposal.status === 'expirado') {
+      throw new BadRequestException('Esta propuesta ha vencido y no puede ser modificada');
+    }
+    if (
+      ['enviado', 'modificado_por_cliente', 'modificado_por_chef'].includes(proposal.status) &&
+      proposal.expiresAt < new Date()
+    ) {
+      throw new BadRequestException('Esta propuesta ha vencido y no puede ser modificada');
+    }
+  }
+
   async findByToken(token: string) {
     const proposal = await this.proposalModel.findOne({ token }).populate('menuId');
     if (!proposal) throw new NotFoundException('Proposal not found');
-    if (proposal.status === 'enviado' && proposal.expiresAt < new Date()) {
-      proposal.status = 'expirado';
-      await this.notificationsService.create({
-        proposalId: proposal._id,
-        type: 'proposal_expired',
-        message: `Propuesta para ${proposal.clientName} ha expirado`,
-      });
-    }
     if (!proposal.viewedAt) {
       proposal.viewedAt = new Date();
     }
@@ -216,6 +220,7 @@ export class ProposalsService {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
     const proposal = await this.proposalModel.findById(id);
     if (!proposal) throw new NotFoundException('Proposal not found');
+    this.assertNotExpired(proposal);
     assertValidTransition(proposal.status, 'aceptado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'aceptado';
@@ -233,6 +238,7 @@ export class ProposalsService {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
     const proposal = await this.proposalModel.findById(id);
     if (!proposal) throw new NotFoundException('Proposal not found');
+    this.assertNotExpired(proposal);
     assertValidTransition(proposal.status, 'rechazado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'rechazado';
@@ -248,6 +254,7 @@ export class ProposalsService {
   async approveByToken(token: string) {
     const proposal = await this.proposalModel.findOne({ token });
     if (!proposal) throw new NotFoundException('Proposal not found');
+    this.assertNotExpired(proposal);
     assertValidTransition(proposal.status, 'aceptado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'aceptado';
@@ -264,6 +271,7 @@ export class ProposalsService {
   async rejectByToken(token: string) {
     const proposal = await this.proposalModel.findOne({ token });
     if (!proposal) throw new NotFoundException('Proposal not found');
+    this.assertNotExpired(proposal);
     assertValidTransition(proposal.status, 'rechazado');
     const previousItems = [...proposal.items] as ProposalItem[];
     proposal.status = 'rechazado';

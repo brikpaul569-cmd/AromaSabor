@@ -79,7 +79,7 @@ export default function PublicProposalPage() {
       .then(setProposal)
       .catch((err) => {
         if (err.statusCode === 404) setNotFound(true);
-        else setError(err.message || 'Failed to load proposal');
+        else setError(err.message || t('proposals.errors.failedLoad'));
       })
       .finally(() => setLoading(false));
   }, [token]);
@@ -93,7 +93,7 @@ export default function PublicProposalPage() {
         setProposal(updated);
         setIsEditing(false);
       } catch (err: any) {
-        setError(err.message || 'Failed to save changes');
+        setError(err.message || t('proposals.errors.failedSave'));
       } finally {
         setIsSaving(false);
       }
@@ -187,13 +187,13 @@ export default function PublicProposalPage() {
             <span className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${STATUS_STYLES[proposal.status] || 'bg-gray-500/20 text-gray-300'}`}>
               {t('status.' + proposal.status)}
             </span>
-            {canClientEdit && !isEditing && (
+            {canClientEdit && !isEditing && !isExpired && (
               <button onClick={() => setIsEditing(true)}
                 className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700">
                 {t('proposals.edit.editItems')}
               </button>
             )}
-            {canClientApprove && !isEditing && !isTerminal && (
+            {canClientApprove && !isEditing && !isTerminal && !isExpired && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleReject}
