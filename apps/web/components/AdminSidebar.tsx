@@ -45,7 +45,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-white/10 bg-gray-950">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-white/10 bg-surface">
       {/* Brand */}
       <div className="flex items-center gap-3 border-b border-white/10 px-6 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-orange-500/20">
@@ -53,7 +53,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
         </div>
         <div>
           <p className="text-sm font-bold text-white">{t('app.title')}</p>
-          <p className="text-[10px] text-gray-500 leading-tight">Admin Panel</p>
+          <p className="text-[10px] text-gray-500 leading-tight">{t('app.tagline')}</p>
         </div>
       </div>
 
@@ -65,17 +65,14 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 active
-                  ? 'bg-gradient-to-r from-amber-500/15 to-orange-600/10 text-amber-400 shadow-sm shadow-amber-500/5'
+                  ? 'bg-brand-muted text-brand font-semibold'
                   : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
               }`}
             >
-              <Icon className={`h-4 w-4 ${active ? 'text-amber-400' : ''}`} />
+              <Icon className={`h-4 w-4 ${active ? 'text-brand' : ''}`} />
               <span>{t(labelKey)}</span>
-              {active && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-amber-400" />
-              )}
             </Link>
           );
         })}

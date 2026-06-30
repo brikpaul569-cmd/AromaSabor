@@ -35,14 +35,14 @@ export default function ChefLayout({ children }: { children: React.ReactNode }) 
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950">
+      <div className="flex min-h-screen items-center justify-center">
         <p className="text-gray-500">{t('common.loading')}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen">
       <AdminSidebar user={user} />
       <main className="ml-60 min-h-screen">{children}</main>
     </div>
