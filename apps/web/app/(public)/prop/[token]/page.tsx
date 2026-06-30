@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
 import ProposalPlateEditor from '@/components/ProposalPlateEditor';
 import type { ProposalPlateEditorProps } from '@/components/ProposalPlateEditor';
+import ItemStatusToggle from '@/components/ItemStatusToggle';
 
 interface ProposalItem {
   _id: string;
@@ -18,6 +19,7 @@ interface ProposalItem {
   portionGrams?: number;
   unit: string;
   quantity: number;
+  itemStatus?: string;
 }
 
 interface MenuRef {
@@ -45,6 +47,7 @@ const STATUS_STYLES: Record<string, string> = {
   enviado: 'bg-green-500/20 text-green-300',
   modificado_por_cliente: 'bg-yellow-500/20 text-yellow-300',
   modificado_por_chef: 'bg-purple-500/20 text-purple-300',
+  respuesta_parcial: 'bg-yellow-500/20 text-yellow-300',
   aceptado: 'bg-green-500/20 text-green-300',
   rechazado: 'bg-red-500/20 text-red-300',
   expirado: 'bg-red-500/20 text-red-300',
@@ -72,7 +75,11 @@ export default function PublicProposalPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isSendingResponse, setIsSendingResponse] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+
+  // Item response state — tracks per-item toggles before submission
+  const [itemStatuses, setItemStatuses] = useState<Record<string, string>>({});
 
   useEffect(() => {
     api.get<Proposal>(`/proposals/${token}`)
@@ -127,6 +134,28 @@ export default function PublicProposalPage() {
     }
   }, [token]);
 
+  const handleItemToggle = useCallback((itemId: string, newStatus: string) => {
+    setItemStatuses((prev) => ({ ...prev, [itemId]: newStatus }));
+  }, []);
+
+  const handleSubmitResponse = useCallback(async () => {
+    if (!proposal) return;
+    setIsSendingResponse(true);
+    setActionMsg(null);
+    try {
+      const items = proposal.items.map((item) => ({
+        _id: item._id,
+        itemStatus: itemStatuses[item._id] || item.itemStatus || 'pendiente',
+      }));
+      const updated = await api.patch<Proposal>(`/proposals/token/${token}/respond`, { items });
+      setProposal(updated);
+    } catch (err: any) {
+      setActionMsg(err.message || 'Error al enviar respuesta');
+    } finally {
+      setIsSendingResponse(false);
+    }
+  }, [proposal, token, itemStatuses]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
@@ -155,10 +184,27 @@ export default function PublicProposalPage() {
 
   if (!proposal) return null;
 
+  // Initialize item statuses from proposal data when proposal loads
+  if (Object.keys(itemStatuses).length === 0 && proposal.items.length > 0) {
+    const initial: Record<string, string> = {};
+    for (const item of proposal.items) {
+      initial[item._id] = item.itemStatus || 'pendiente';
+    }
+    // Only set if different — avoid infinite re-render
+    requestAnimationFrame(() => {
+      setItemStatuses((prev) => {
+        if (Object.keys(prev).length > 0) return prev;
+        return initial;
+      });
+    });
+  }
+
   const isExpired = proposal.status === 'expirado' || new Date(proposal.expiresAt) < new Date();
   const isActive = proposal.status === 'enviado';
-  const canClientEdit = proposal.status === 'enviado' || proposal.status === 'modificado_por_chef';
-  const canClientApprove = ['enviado', 'modificado_por_chef', 'modificado_por_cliente'].includes(proposal.status);
+  const canClientEdit = (proposal.status === 'enviado' || proposal.status === 'modificado_por_chef') && !isExpired;
+  const canClientRespond = ['enviado', 'modificado_por_chef'].includes(proposal.status) && !isExpired;
+  const isRespuestaParcial = proposal.status === 'respuesta_parcial';
+  const canClientApprove = ['modificado_por_cliente'].includes(proposal.status) && !isTerminal && !isExpired;
   const isTerminal = ['aceptado', 'rechazado', 'expirado'].includes(proposal.status);
   const uniqueCategories = [...new Map(proposal.items.map((i) => [i.categoryId, { id: i.categoryId, label: i.categoryLabel }])).values()];
 
@@ -268,12 +314,54 @@ export default function PublicProposalPage() {
                     />
                   </div>
                   <div className="flex-1 min-w-[200px] space-y-2">
-                    {proposal.items.map((item) => (
-                      <div key={item._id} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-300">{item.name}</span>
-                        <span className="text-gray-500">× {item.quantity}</span>
-                      </div>
-                    ))}
+                    {isRespuestaParcial ? (
+                      <>
+                        {proposal.items.map((item) => {
+                          const status = item.itemStatus || 'pendiente';
+                          const isAccepted = status === 'aceptado';
+                          const isRejected = status === 'rechazado';
+                          return (
+                            <div key={item._id} className="flex items-center justify-between text-sm">
+                              <span className="text-gray-300">{item.name}</span>
+                              <span className={`text-xs font-medium ${isAccepted ? 'text-green-400' : isRejected ? 'text-red-400' : 'text-yellow-400'}`}>
+                                {isAccepted ? '✅ ' : isRejected ? '❌ ' : '⏳ '}
+                                {isAccepted ? t('itemStatus.accepted') : isRejected ? t('itemStatus.rejected') : t('itemStatus.pending')}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        <div className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-center text-sm text-yellow-300">
+                          {t('itemStatus.waitingChef')}
+                        </div>
+                      </>
+                    ) : canClientRespond && !isEditing ? (
+                      <>
+                        {proposal.items.map((item) => (
+                          <ItemStatusToggle
+                            key={item._id}
+                            itemId={item._id}
+                            itemName={item.name}
+                            currentStatus={itemStatuses[item._id] || item.itemStatus || 'pendiente'}
+                            onToggle={handleItemToggle}
+                            disabled={isSendingResponse}
+                          />
+                        ))}
+                        <button
+                          onClick={handleSubmitResponse}
+                          disabled={isSendingResponse}
+                          className="mt-4 w-full rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {isSendingResponse ? t('itemStatus.sending') : t('itemStatus.sendResponse')}
+                        </button>
+                      </>
+                    ) : (
+                      proposal.items.map((item) => (
+                        <div key={item._id} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-300">{item.name}</span>
+                          <span className="text-gray-500">× {item.quantity}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>

@@ -71,6 +71,7 @@ const STATUS_STYLES: Record<string, string> = {
   enviado: 'bg-blue-500/20 text-blue-300',
   modificado_por_cliente: 'bg-yellow-500/20 text-yellow-300',
   modificado_por_chef: 'bg-purple-500/20 text-purple-300',
+  respuesta_parcial: 'bg-yellow-500/20 text-yellow-300',
   aceptado: 'bg-green-500/20 text-green-300',
   rechazado: 'bg-red-500/20 text-red-300',
   expirado: 'bg-red-500/20 text-red-300',
@@ -367,12 +368,26 @@ export default function ProposalDetailPage() {
                 />
               </div>
               <div className="flex-1 min-w-[200px] space-y-2">
-                {proposal.items.map((item) => (
-                  <div key={item._id} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-300">{item.name}</span>
-                    <span className="text-gray-500">× {item.quantity}</span>
-                  </div>
-                ))}
+                {proposal.items.map((item) => {
+                  const showItemStatus = proposal.status === 'respuesta_parcial';
+                  const itemStatus = (item as any).itemStatus || 'pendiente';
+                  const isAccepted = itemStatus === 'aceptado';
+                  const isRejected = itemStatus === 'rechazado';
+                  return (
+                    <div key={item._id} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-300">{item.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">× {item.quantity}</span>
+                        {showItemStatus && (
+                          <span className={`text-xs font-medium ${isAccepted ? 'text-green-400' : isRejected ? 'text-red-400' : 'text-yellow-400'}`}>
+                            {isAccepted ? '✅ ' : isRejected ? '❌ ' : '⏳ '}
+                            {isAccepted ? t('itemStatus.clientAccepted') : isRejected ? t('itemStatus.clientRejected') : t('itemStatus.pending')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
