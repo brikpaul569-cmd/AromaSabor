@@ -26,7 +26,7 @@ export default function LoginPage() {
       } else {
         await api.post('/auth/register', { email, name, password });
       }
-      router.push('/dashboard');
+      router.push('/chef/dashboard');
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : t('common.error'));
     } finally {
