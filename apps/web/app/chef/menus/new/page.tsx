@@ -19,8 +19,8 @@ export default function NewMenuPage() {
     setLoading(true);
 
     try {
-      await api.post('/menus', { name, description: description || undefined });
-      router.push('/chef/menus');
+      const menu = await api.post<{ _id: string }>('/menus', { name, description: description || undefined });
+      router.push(`/chef/menus/${menu._id}`);
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : t('common.error'));
     } finally {
