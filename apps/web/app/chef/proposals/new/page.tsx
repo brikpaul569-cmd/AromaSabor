@@ -157,69 +157,82 @@ export default function NewProposalPage() {
             setSelectedItems(new Map());
             setItemQuantities(new Map());
           }}
-          className="w-full rounded-lg bg-white/10 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
+          className="w-full rounded-lg bg-gray-800 px-4 py-3 text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
         >
-          <option value="">{t('proposals.selectMenu')}</option>
-          {menus.map((m) => (
-            <option key={m._id} value={m._id}>{m.name}</option>
+          <option value="" className="bg-gray-800 text-white">{t('proposals.selectMenu')}</option>
+          {menus.filter((m) => m.categories?.some((c) => c.items?.some((i) => i.isAvailable))).map((m) => (
+            <option key={m._id} value={m._id} className="bg-gray-800 text-white">{m.name}</option>
           ))}
         </select>
+        {menus.length > 0 && menus.filter((m) => m.categories?.some((c) => c.items?.some((i) => i.isAvailable))).length === 0 && (
+          <p className="mt-2 text-sm text-gray-500 italic">{t('proposals.errors.noItemsInMenu')}</p>
+        )}
       </div>
 
       {currentMenu && (
         <div className="mt-8 space-y-6">
           <h2 className="text-lg font-semibold text-white/80">{t('proposals.selectItems')}</h2>
-          {currentMenu.categories.map((cat) => {
-            const available = cat.items.filter((i) => i.isAvailable);
-            if (available.length === 0) return null;
-            return (
-              <div key={cat._id}>
-                <h3 className="mb-2 text-sm font-medium text-gray-400">{cat.label}</h3>
-                <div className="space-y-2">
-                  {available.map((item) => {
-                    const isSelected = selectedItems.has(item._id);
-                    return (
-                      <label
-                        key={item._id}
-                        className={`flex items-center gap-4 rounded-lg px-4 py-3 transition cursor-pointer ${
-                          isSelected
-                            ? 'bg-green-500/20 ring-1 ring-green-400/40'
-                            : 'bg-white/5 hover:bg-white/10'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleItem(cat, item)}
-                          className="h-4 w-4 accent-green-500"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium">{item.name}</p>
-                          {item.description && (
-                            <p className="truncate text-xs text-gray-500">{item.description}</p>
-                          )}
-                        </div>
-                        {item.portionGrams && (
-                          <span className="text-xs text-gray-500">{item.portionGrams}{item.unit}</span>
-                        )}
-                        <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
-                        {isSelected && (
-                          <input
-                            type="number"
-                            min={1}
-                            value={itemQuantities.get(item._id) ?? 1}
-                            onChange={(e) => setQuantity(item._id, Number(e.target.value))}
-                            onClick={(e) => e.stopPropagation()}
-                            className="h-8 w-16 rounded bg-white/10 px-2 text-center text-xs text-white outline-none ring-1 ring-white/20 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        )}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
+          {(() => {
+            const hasAvailableItems = currentMenu.categories.some((c) =>
+              c.items.some((i) => i.isAvailable),
             );
-          })}
+            if (!hasAvailableItems) {
+              return (
+                <p className="text-sm text-gray-500 italic">{t('proposals.errors.noItemsInMenu')}</p>
+              );
+            }
+            return currentMenu.categories.map((cat) => {
+              const available = cat.items.filter((i) => i.isAvailable);
+              if (available.length === 0) return null;
+              return (
+                <div key={cat._id}>
+                  <h3 className="mb-2 text-sm font-medium text-gray-400">{cat.label}</h3>
+                  <div className="space-y-2">
+                    {available.map((item) => {
+                      const isSelected = selectedItems.has(item._id);
+                      return (
+                        <label
+                          key={item._id}
+                          className={`flex items-center gap-4 rounded-lg px-4 py-3 transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-green-500/20 ring-1 ring-green-400/40'
+                              : 'bg-white/5 hover:bg-white/10'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleItem(cat, item)}
+                            className="h-4 w-4 accent-green-500"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium">{item.name}</p>
+                            {item.description && (
+                              <p className="truncate text-xs text-gray-500">{item.description}</p>
+                            )}
+                          </div>
+                          {item.portionGrams && (
+                            <span className="text-xs text-gray-500">{item.portionGrams}{item.unit}</span>
+                          )}
+                          <span className="text-sm font-medium">{formatPrice(item.pricePerPortion)}</span>
+                          {isSelected && (
+                            <input
+                              type="number"
+                              min={1}
+                              value={itemQuantities.get(item._id) ?? 1}
+                              onChange={(e) => setQuantity(item._id, Number(e.target.value))}
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-8 w-16 rounded bg-white/10 px-2 text-center text-xs text-white outline-none ring-1 ring-white/20 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            });
+          })()}
         </div>
       )}
 
@@ -281,7 +294,7 @@ export default function NewProposalPage() {
       <div className="mt-8 flex items-center gap-4">
         <button onClick={handleSave} disabled={saving}
           className="rounded-lg bg-white/10 px-6 py-3 font-medium text-white transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
-          {saving ? t('proposals.saving') : t('proposals.saveDraft')}
+          {saving ? t('proposals.saving') : t('proposals.saveProposal')}
         </button>
         <button onClick={() => router.push('/chef/proposals')} className="text-sm text-gray-500 hover:text-white">{t('common.cancel')}</button>
       </div>
