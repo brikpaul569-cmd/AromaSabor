@@ -85,7 +85,7 @@ export default function DashboardPage() {
           <div className="mt-4 rounded-xl bg-white/5 p-8 text-center">
             <p className="text-gray-500">{t('dashboard.noProposals')}</p>
             <Link
-              href="/proposals/new"
+              href="/chef/proposals/new"
               className="mt-2 inline-block text-sm text-blue-400 hover:text-blue-300"
             >
               {t('dashboard.createFirst')}
@@ -96,7 +96,7 @@ export default function DashboardPage() {
             {recent.map((p) => (
               <Link
                 key={p._id}
-                href={`/proposals/${p._id}`}
+                href={`/chef/proposals/${p._id}`}
                 className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 transition hover:bg-white/10"
               >
                 <span className="text-sm font-medium">{p.clientName}</span>

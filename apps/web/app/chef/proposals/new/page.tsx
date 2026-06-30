@@ -137,7 +137,7 @@ export default function NewProposalPage() {
         guestCount,
         notes: notes.trim() || undefined,
       });
-      router.push(`/proposals/${proposal._id}`);
+      router.push(`/chef/proposals/${proposal._id}`);
     } catch (err: any) {
       setError(err.message || t('proposals.errors.createFailed'));
       setSaving(false);
@@ -283,7 +283,7 @@ export default function NewProposalPage() {
           className="rounded-lg bg-white/10 px-6 py-3 font-medium text-white transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
           {saving ? t('proposals.saving') : t('proposals.saveDraft')}
         </button>
-        <button onClick={() => router.push('/proposals')} className="text-sm text-gray-500 hover:text-white">{t('common.cancel')}</button>
+        <button onClick={() => router.push('/chef/proposals')} className="text-sm text-gray-500 hover:text-white">{t('common.cancel')}</button>
       </div>
     </div>
   );

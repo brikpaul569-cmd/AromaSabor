@@ -111,7 +111,7 @@ export default function ProposalsPage() {
           {filtered.map((p) => (
             <Link
               key={p._id}
-              href={`/proposals/${p._id}`}
+              href={`/chef/proposals/${p._id}`}
               className="flex items-center justify-between rounded-lg bg-white/5 px-5 py-4 transition hover:bg-white/10"
             >
               <div className="min-w-0 flex-1">

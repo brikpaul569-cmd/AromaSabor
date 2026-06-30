@@ -34,7 +34,7 @@ export default function MenusPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t('menus.title')}</h1>
         <button
-          onClick={() => router.push('/menus/new')}
+          onClick={() => router.push('/chef/menus/new')}
           className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium transition hover:bg-white/30"
         >
           {t('menus.new')}
@@ -50,7 +50,7 @@ export default function MenusPage() {
           {menus.map((menu) => (
             <button
               key={menu._id}
-              onClick={() => router.push(`/menus/${menu._id}`)}
+              onClick={() => router.push(`/chef/menus/${menu._id}`)}
               className="w-full rounded-xl bg-white/10 p-6 backdrop-blur-lg text-left transition hover:bg-white/15"
             >
               <h2 className="text-lg font-semibold">{menu.name}</h2>
