@@ -64,6 +64,7 @@ export interface Proposal {
   _id: string;
   menuId: string;
   token: string;
+  shortCode?: string;
   clientName: string;
   eventDate: string;
   guestCount: number;
