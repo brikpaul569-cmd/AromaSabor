@@ -14,6 +14,7 @@ import ReplaceSelector from '@/components/ReplaceSelector';
 import type { ReplaceItem } from '@/components/ReplaceSelector';
 import PricingBreakdown from '@/components/PricingBreakdown';
 import type { PricingItem } from '@/components/PricingBreakdown';
+import LiveBill from '@/components/LiveBill';
 
 interface MenuCategory {
   _id: string;
@@ -226,7 +227,7 @@ export default function PublicMenuPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 pb-20 text-white">
       <div className="mx-auto max-w-5xl px-4 py-12">
         <header className="text-center">
           <h1 className="text-4xl font-bold">{menu.name}</h1>
@@ -239,26 +240,6 @@ export default function PublicMenuPage() {
           <div className="relative flex flex-col items-center justify-center">
             <h2 className="mb-6 text-lg font-semibold text-white/80">{t('plate.yourPlate')}</h2>
             <PlateView items={sel} categoryOrder={categoryOrder} onItemTap={handleItemTap} />
-
-            <div className="mt-6 w-full max-w-xs">
-              <label className="mb-2 block text-sm text-gray-400">{t('plate.guestCount')}</label>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setGuestCount(guestCount - 1)}
-                  disabled={guestCount <= 1}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-lg transition hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
-                >−</button>
-                <input
-                  type="number" min={1} value={guestCount}
-                  onChange={(e) => setGuestCount(Number(e.target.value))}
-                  className="h-10 w-20 rounded-lg bg-white/10 px-3 text-center text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-                <button
-                  onClick={() => setGuestCount(guestCount + 1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-lg transition hover:bg-white/20"
-                >+</button>
-              </div>
-            </div>
 
             <div className="mt-6" ref={pricingRef}>
               <PricingBreakdown items={pricingItems} guestCount={guestCount} categories={categoryOrder} />
@@ -527,6 +508,8 @@ export default function PublicMenuPage() {
           onClose={() => setReplaceCategoryId(null)}
         />
       )}
+
+      <LiveBill items={pricingItems} />
     </div>
   );
 }
