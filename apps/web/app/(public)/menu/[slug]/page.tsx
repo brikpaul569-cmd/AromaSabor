@@ -10,8 +10,7 @@ import PlateView from '@/components/PlateView';
 import type { PlateItem } from '@/components/PlateView';
 import type { PopoverItem } from '@/components/PlateItemPopover';
 import PlateItemPopover from '@/components/PlateItemPopover';
-import ReplaceSelector from '@/components/ReplaceSelector';
-import type { ReplaceItem } from '@/components/ReplaceSelector';
+
 import PricingBreakdown from '@/components/PricingBreakdown';
 import type { PricingItem } from '@/components/PricingBreakdown';
 import LiveBill from '@/components/LiveBill';
@@ -66,7 +65,7 @@ export default function PublicMenuPage() {
   const router = useRouter();
 
   const [activePlateItem, setActivePlateItem] = useState<PopoverItem | null>(null);
-  const [replaceCategoryId, setReplaceCategoryId] = useState<string | null>(null);
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -112,22 +111,13 @@ export default function PublicMenuPage() {
   }, [activePlateItem, deselectItem]);
 
   const handleReplaceOpen = useCallback(() => {
-    if (!activePlateItem) return;
-    setReplaceCategoryId(activePlateItem.categoryId);
-  }, [activePlateItem]);
-
-  const handleReplaceSelect = useCallback((item: ReplaceItem) => {
-    if (!replaceCategoryId || !activePlateItem) return;
-    deselectItem(activePlateItem.categoryId, activePlateItem._id);
-    const cat = menu?.categories.find((c) => c._id === replaceCategoryId);
-    if (!cat) return;
-    const fullItem = cat.items.find((i) => i._id === item._id);
-    if (fullItem) {
-      selectItem(replaceCategoryId, fullItem, cat.maxItems);
-    }
-    setReplaceCategoryId(null);
+    if (!activePlateItem || !menu) return;
+    const catIndex = menu.categories.findIndex(
+      (c) => c._id === activePlateItem.categoryId,
+    );
+    if (catIndex >= 0) setActiveStep(catIndex);
     setActivePlateItem(null);
-  }, [replaceCategoryId, activePlateItem, menu, selectItem, deselectItem]);
+  }, [activePlateItem, menu]);
 
   const handleItemSelect = useCallback((cat: MenuCategory, item: CategoryItem) => {
     if (isSelected(cat._id, item._id)) {
@@ -160,7 +150,7 @@ export default function PublicMenuPage() {
     console.log('[submit] flatItems', { length: flatItems.length, items: flatItems });
 
     if (flatItems.length === 0) {
-      setSubmitError('No items selected. Please select at least one item before submitting.');
+      setSubmitError(t('plate.submitErrorNoItems'));
       return;
     }
 
@@ -177,7 +167,7 @@ export default function PublicMenuPage() {
       router.push(result.url);
     } catch (err: any) {
       console.error('[submit] error', err);
-      setSubmitError(err.message || 'Failed to submit your plate. Please try again.');
+      setSubmitError(err.message || t('plate.submitErrorFailed'));
       setSubmitting(false);
     }
   }, [menu, selections, slug, guestCount, clientName, notes, router]);
@@ -222,10 +212,6 @@ export default function PublicMenuPage() {
   const isFirstStep = activeStep === 0;
   const isLastStep = activeStep === orderedCategories.length - 1;
 
-  const activePlateCat = activePlateItem
-    ? menu.categories.find((c) => c._id === activePlateItem.categoryId)
-    : null;
-
   return (
     <div className="min-h-screen bg-neutral-950 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.03)_0%,_transparent_70%)] pb-20 text-white">
       <div className="mx-auto max-w-5xl px-4 py-12">
@@ -249,10 +235,10 @@ export default function PublicMenuPage() {
               <button onClick={clearAll} className="mt-4 text-sm text-gray-500 hover:text-white">{t('plate.clear')}</button>
             )}
 
-            {activePlateItem && !replaceCategoryId && (
+            {activePlateItem && (
               <PlateItemPopover
                 item={activePlateItem}
-                canReplace={(activePlateCat?.items.length ?? 0) > 1}
+                canReplace={true}
                 onRemove={handleRemove}
                 onReplace={handleReplaceOpen}
                 onClose={() => setActivePlateItem(null)}
@@ -497,16 +483,6 @@ export default function PublicMenuPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {replaceCategoryId && activePlateItem && activePlateCat && (
-        <ReplaceSelector
-          categoryLabel={activePlateCat.label}
-          items={activePlateCat.items}
-          currentItemId={activePlateItem._id}
-          onSelect={handleReplaceSelect}
-          onClose={() => setReplaceCategoryId(null)}
-        />
       )}
 
       <LiveBill items={pricingItems} />
