@@ -31,31 +31,34 @@ export default function MenusPage() {
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('menus.title')}</h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t('menus.title')}</h1>
+          <p className="mt-1.5 text-sm text-gray-500">{menus.length} {t('menus.editor.items')}</p>
+        </div>
         <button
           onClick={() => router.push('/chef/menus/new')}
-          className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium transition hover:bg-white/30"
+          className="rounded-lg bg-brand-muted px-4 py-2 text-sm font-medium text-brand transition-colors duration-200 hover:bg-brand/20"
         >
-          {t('menus.new')}
+          + {t('menus.new')}
         </button>
       </div>
 
       {menus.length === 0 ? (
-        <div className="mt-12 rounded-xl bg-white/5 p-8 text-center">
+        <div className="mt-6 rounded-xl bg-surface p-12 text-center">
           <p className="text-gray-500">{t('menus.empty')}</p>
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {menus.map((menu) => (
             <button
               key={menu._id}
               onClick={() => router.push(`/chef/menus/${menu._id}`)}
-              className="w-full rounded-xl bg-white/10 p-6 backdrop-blur-lg text-left transition hover:bg-white/15"
+              className="group w-full rounded-xl bg-surface p-6 text-left transition-all duration-200 hover:bg-[#1E2533] hover:-translate-y-0.5"
             >
-              <h2 className="text-lg font-semibold">{menu.name}</h2>
+              <h2 className="text-lg font-semibold text-white/90 group-hover:text-white transition-colors duration-200">{menu.name}</h2>
               {menu.description && (
-                <p className="mt-1 text-sm text-gray-400 line-clamp-2">{menu.description}</p>
+                <p className="mt-1.5 text-sm text-gray-500 line-clamp-2">{menu.description}</p>
               )}
               <div className="mt-4 flex items-center gap-2">
                 <span className={`inline-block h-2 w-2 rounded-full ${menu.isActive ? 'bg-green-400' : 'bg-gray-500'}`} />

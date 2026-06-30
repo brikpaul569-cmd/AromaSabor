@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays } from 'lucide-react';
+import {
+  CalendarDays,
+  ClipboardList,
+  Send,
+  FileEdit,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 
@@ -109,15 +114,18 @@ export default function DashboardPage() {
 
       {/* Stats cards */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Link href="/chef/proposals" className="rounded-xl bg-surface p-6 transition hover:bg-white/[0.04]">
+        <Link href="/chef/proposals" className="group relative rounded-xl bg-surface p-6 transition-all duration-200 hover:bg-white/[0.04] hover:-translate-y-0.5">
+          <ClipboardList className="absolute right-4 top-4 h-5 w-5 text-white/10 group-hover:text-brand/30 transition-colors duration-200" />
           <p className="text-3xl font-bold text-white">{totalProposals}</p>
           <p className="mt-1 text-sm text-gray-500">{t('dashboard.totalProposals')}</p>
         </Link>
-        <Link href="/chef/proposals" className="rounded-xl bg-surface p-6 transition hover:bg-white/[0.04]">
+        <Link href="/chef/proposals" className="group relative rounded-xl bg-surface p-6 transition-all duration-200 hover:bg-white/[0.04] hover:-translate-y-0.5">
+          <Send className="absolute right-4 top-4 h-5 w-5 text-white/10 group-hover:text-brand/30 transition-colors duration-200" />
           <p className="text-3xl font-bold text-brand-light">{sentCount}</p>
           <p className="mt-1 text-sm text-gray-500">{t('dashboard.sent')}</p>
         </Link>
-        <Link href="/chef/proposals" className="rounded-xl bg-surface p-6 transition hover:bg-white/[0.04]">
+        <Link href="/chef/proposals" className="group relative rounded-xl bg-surface p-6 transition-all duration-200 hover:bg-white/[0.04] hover:-translate-y-0.5">
+          <FileEdit className="absolute right-4 top-4 h-5 w-5 text-white/10 group-hover:text-brand/30 transition-colors duration-200" />
           <p className="text-3xl font-bold text-white/60">{draftCount}</p>
           <p className="mt-1 text-sm text-gray-500">{t('dashboard.drafts')}</p>
         </Link>

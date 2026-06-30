@@ -19,13 +19,13 @@ interface Proposal {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  borrador: 'bg-gray-500/20 text-gray-300',
-  enviado: 'bg-blue-500/20 text-blue-300',
-  modificado_por_cliente: 'bg-yellow-500/20 text-yellow-300',
-  modificado_por_chef: 'bg-purple-500/20 text-purple-300',
-  aceptado: 'bg-green-500/20 text-green-300',
-  rechazado: 'bg-red-500/20 text-red-300',
-  expirado: 'bg-red-500/10 text-red-400',
+  borrador: 'bg-white/5 text-gray-400',
+  enviado: 'bg-blue-500/10 text-blue-400',
+  modificado_por_cliente: 'bg-amber-500/10 text-amber-400',
+  modificado_por_chef: 'bg-purple-500/10 text-purple-400',
+  aceptado: 'bg-green-500/10 text-green-400',
+  rechazado: 'bg-red-500/10 text-red-400',
+  expirado: 'bg-gray-500/10 text-gray-400',
 };
 
 const FILTER_OPTIONS = ['all', 'borrador', 'enviado', 'modificado_por_cliente', 'modificado_por_chef', 'aceptado', 'rechazado', 'expirado'] as const;
@@ -68,19 +68,22 @@ export default function ProposalsPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('proposals.title')}</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t('proposals.title')}</h1>
+          <p className="mt-1.5 text-sm text-gray-500">{proposals.length} {t('dashboard.totalProposals')}</p>
+        </div>
         <Link
           href="/chef/proposals/new"
-          className="rounded-lg bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20"
+          className="rounded-lg bg-brand-muted px-4 py-2 text-sm font-medium text-brand transition-colors duration-200 hover:bg-brand/20"
         >
-          {t('proposals.new')}
+          + {t('proposals.new')}
         </Link>
       </div>
 
       {monthlyTotal > 0 && (
-        <div className="mt-4 rounded-lg bg-green-500/10 px-4 py-3">
+        <div className="mt-6 rounded-xl bg-surface px-5 py-4">
           <p className="text-xs text-green-400">{t('proposals.approvedThisMonth')}</p>
-          <p className="text-lg font-semibold text-green-300">{formatPrice(monthlyTotal)}</p>
+          <p className="mt-1 text-2xl font-bold text-green-300">{formatPrice(monthlyTotal)}</p>
         </div>
       )}
 
@@ -89,10 +92,10 @@ export default function ProposalsPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 ${
               filter === f
-                ? 'bg-white/20 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                ? 'bg-brand-muted text-brand'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-200'
             }`}
           >
             {f === 'all' ? t('proposals.filterAll') : t('status.' + f)}
@@ -103,26 +106,26 @@ export default function ProposalsPage() {
       {loading ? (
         <p className="mt-8 text-gray-500">{t('common.loading')}</p>
       ) : filtered.length === 0 ? (
-        <div className="mt-8 rounded-xl bg-white/5 p-8 text-center">
+        <div className="mt-6 rounded-xl bg-surface p-12 text-center">
           <p className="text-gray-500">{t('proposals.noMatch')}</p>
         </div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="mt-6 space-y-3">
           {filtered.map((p) => (
             <Link
               key={p._id}
               href={`/chef/proposals/${p._id}`}
-              className="flex items-center justify-between rounded-lg bg-white/5 px-5 py-4 transition hover:bg-white/10"
+              className="flex items-center justify-between rounded-xl bg-surface px-5 py-4 transition-all duration-200 hover:bg-[#1E2533] hover:-translate-y-0.5"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-medium">{p.clientName}</p>
+                <p className="font-medium text-white/90">{p.clientName}</p>
                 <p className="mt-0.5 text-sm text-gray-500">
-                  {formatDate(p.eventDate)} · {p.items.length} items · {p.guestCount} guests
+                  {formatDate(p.eventDate)} · {p.items.length} {t('menus.editor.items')} · {p.guestCount} {t('proposals.detail.guests')}
                 </p>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-400">{formatPrice(p.quotation)}</span>
-                <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || 'bg-gray-500/20 text-gray-300'}`}>
+                <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || 'bg-white/5 text-gray-400'}`}>
                   {t('status.' + p.status)}
                 </span>
               </div>
