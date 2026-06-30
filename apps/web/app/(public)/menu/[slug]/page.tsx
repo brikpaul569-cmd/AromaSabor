@@ -343,9 +343,9 @@ export default function PublicMenuPage() {
                 <h3 className="text-base font-medium text-white">
                   {currentCategory.label}
                 </h3>
-                <span className="text-xs text-green-400">
-                  {getSelectionCount(currentCategory._id)}/{currentCategory.maxItems} selected
-                </span>
+                  <span className="text-xs text-green-400">
+                    {getSelectionCount(currentCategory._id)}/{currentCategory.maxItems} {t('plate.selected')}
+                  </span>
               </div>
 
               <ul className="space-y-2">
@@ -415,7 +415,7 @@ export default function PublicMenuPage() {
                 onClick={() => setActiveStep((s) => s - 1)}
                 className="rounded-lg px-4 py-2 text-sm font-medium transition bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                Back
+                {t('plate.back')}
               </button>
 
               {isLastStep ? (
@@ -424,7 +424,7 @@ export default function PublicMenuPage() {
                   onClick={handleReviewBowl}
                   className="rounded-lg px-4 py-2 text-sm font-medium transition bg-green-600 text-white hover:bg-green-500"
                 >
-                  Review your bowl
+                  {t('plate.reviewBowl')}
                 </button>
               ) : (
                 <button
@@ -432,7 +432,7 @@ export default function PublicMenuPage() {
                   onClick={() => setActiveStep((s) => s + 1)}
                   className="rounded-lg px-4 py-2 text-sm font-medium transition bg-white/10 text-white/80 hover:bg-white/20"
                 >
-                  Next
+                  {t('plate.next')}
                 </button>
               )}
             </div>
@@ -444,7 +444,7 @@ export default function PublicMenuPage() {
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-md rounded-xl bg-gray-900 p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-white">Confirm your bowl</h3>
+            <h3 className="text-lg font-semibold text-white">{t('plate.confirmTitle')}</h3>
             <p className="mt-1 text-sm text-gray-400">{menu.name}</p>
 
             {/* Selected items summary */}
@@ -466,23 +466,23 @@ export default function PublicMenuPage() {
 
             {/* Client name (optional) */}
             <div className="mt-4">
-              <label className="mb-1 block text-sm text-gray-400">Your name (optional)</label>
+              <label className="mb-1 block text-sm text-gray-400">{t('plate.yourName')}</label>
               <input
                 type="text"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="Enter your name"
+                placeholder={t('plate.namePlaceholder')}
                 className="w-full rounded-lg bg-white/10 px-4 py-2 text-sm text-white outline-none ring-1 ring-white/20 placeholder:text-gray-600 focus:ring-2 focus:ring-white/40"
               />
             </div>
 
             {/* Notes (optional) */}
             <div className="mt-3">
-              <label className="mb-1 block text-sm text-gray-400">Notes (optional)</label>
+              <label className="mb-1 block text-sm text-gray-400">{t('plate.notesOptional')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any special requests?"
+                placeholder={t('plate.notesPlaceholder')}
                 rows={2}
                 className="w-full resize-none rounded-lg bg-white/10 px-4 py-2 text-sm text-white outline-none ring-1 ring-white/20 placeholder:text-gray-600 focus:ring-2 focus:ring-white/40"
               />
@@ -503,7 +503,7 @@ export default function PublicMenuPage() {
                 disabled={submitting}
                 className="rounded-lg px-4 py-2 text-sm text-gray-400 transition hover:text-white disabled:opacity-50"
               >
-                Cancel
+                {t('plate.cancel')}
               </button>
               <button
                 type="button"
@@ -511,7 +511,7 @@ export default function PublicMenuPage() {
                 disabled={submitting}
                 className="rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-green-500 disabled:opacity-50"
               >
-                {submitting ? 'Sending...' : 'Send to chef'}
+                {submitting ? t('plate.sending') : t('plate.sendToChef')}
               </button>
             </div>
           </div>

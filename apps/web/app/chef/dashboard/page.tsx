@@ -28,6 +28,15 @@ export default function DashboardPage() {
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('welcome=true')) {
+      setShowWelcome(true);
+      // Clean URL without reload
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -51,6 +60,13 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8">
+      {/* Welcome banner */}
+      {showWelcome && (
+        <div className="mb-6 rounded-xl border border-green-500/20 bg-green-500/10 px-5 py-4">
+          <p className="text-sm font-medium text-green-300">{t('auth.welcomeNew')}</p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{t('dashboard.title')}</h1>

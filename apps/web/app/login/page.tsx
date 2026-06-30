@@ -23,12 +23,17 @@ export default function LoginPage() {
     try {
       if (mode === 'login') {
         await api.post('/auth/login', { email, password });
+        router.push('/chef/dashboard');
       } else {
         await api.post('/auth/register', { email, name, password });
+        router.push('/chef/dashboard?welcome=true');
       }
-      router.push('/chef/dashboard');
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : t('common.error'));
+      if (err instanceof ApiClientError && err.message.includes('already registered')) {
+        setError(t('auth.emailExists'));
+      } else {
+        setError(err instanceof ApiClientError ? err.message : t('common.error'));
+      }
     } finally {
       setLoading(false);
     }

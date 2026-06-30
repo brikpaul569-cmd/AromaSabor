@@ -381,8 +381,7 @@ export default function ProposalDetailPage() {
 
       <div className="mt-8 flex items-center justify-between rounded-lg bg-white/5 px-4 py-3 text-xs text-gray-500">
         <div>
-          <p>{t('proposals.detail.id')}: {proposal._id}</p>
-          {isSentOrExpired && <p className="mt-1">{t('proposals.detail.token')}: {proposal.token}</p>}
+          <p>{t('proposals.detail.id')}: {proposal._id.slice(-6).toUpperCase()}</p>
           <p className="mt-1">{t('proposals.detail.created')}: {formatDate(proposal.createdAt)}</p>
           {proposal.expiresAt && (
             <p className="mt-1">

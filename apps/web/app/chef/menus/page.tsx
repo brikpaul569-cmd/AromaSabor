@@ -60,7 +60,7 @@ export default function MenusPage() {
               <div className="mt-4 flex items-center gap-2">
                 <span className={`inline-block h-2 w-2 rounded-full ${menu.isActive ? 'bg-green-400' : 'bg-gray-500'}`} />
                 <span className="text-xs text-gray-500">{menu.isActive ? t('menus.active') : t('menus.draft')}</span>
-                <span className="ml-auto text-xs text-gray-500">{menu.slug}</span>
+                <span className="ml-auto text-xs text-gray-500">/{menu.slug}</span>
               </div>
             </button>
           ))}

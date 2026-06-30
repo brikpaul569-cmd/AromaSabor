@@ -99,8 +99,8 @@ export default function NotificationBell() {
   }, [open]);
 
   return (
-    <div ref={ref} className="relative">
-      {/* Bell button */}
+    <>
+      {/* Bell button — no longer relative, keeps its spot in the sidebar */}
       <button
         onClick={() => setOpen(!open)}
         className="relative flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-white/10 hover:text-white"
@@ -127,68 +127,88 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown — opens upward because the bell is at the bottom of the sidebar */}
+      {/* Overlay backdrop */}
       {open && (
-        <div className="absolute bottom-full right-0 mb-2 w-80 rounded-xl border border-white/10 bg-gray-900 shadow-2xl" style={{ zIndex: 100 }}>
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <span className="text-sm font-semibold text-white/90">
-              {t('notification.title')}
-            </span>
-            {unreadCount > 0 && (
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-gray-400">
-                {t('notification.unreadCount', { count: unreadCount })}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onMouseDown={() => setOpen(false)}
+        >
+          {/* Panel — stopPropagation so clicks inside don't close */}
+          <div
+            ref={ref}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-gray-900 shadow-2xl"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <span className="text-base font-semibold text-white/90">
+                {t('notification.title')}
               </span>
-            )}
-          </div>
-
-          {/* List */}
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-gray-500">
-                {t('notification.empty')}
-              </p>
-            ) : (
-              notifications.slice(0, 20).map((n) => (
-                <a
-                  key={n._id}
-                  href={`/chef/proposals/${n.proposalId}`}
-                  onClick={() => {
-                    if (!n.read) markRead(n._id);
-                  }}
-                  className={`flex items-start gap-3 px-4 py-3 text-sm transition hover:bg-white/5 ${
-                    !n.read ? 'border-l-2 border-purple-400 bg-white/[0.02]' : ''
-                  }`}
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-gray-400">
+                    {t('notification.unreadCount', { count: unreadCount })}
+                  </span>
+                )}
+                <button
+                  onClick={() => setOpen(false)}
+                  className="flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:bg-white/10 hover:text-white"
                 >
-                  <span
-                    className={`mt-1 h-2 w-2 shrink-0 rounded-full ${typeColor(n.type)}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className={`truncate ${!n.read ? 'font-medium text-white/90' : 'text-gray-400'}`}>
-                      {n.message}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-gray-600">
-                      {timeAgo(n.createdAt)}
-                    </p>
-                  </div>
-                  {!n.read && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        markRead(n._id);
-                      }}
-                      className="shrink-0 text-[11px] text-gray-500 hover:text-white"
-                    >
-                      {t('notification.markRead')}
-                    </button>
-                  )}
-                </a>
-              ))
-            )}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="max-h-96 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <p className="px-5 py-12 text-center text-sm text-gray-500">
+                  {t('notification.empty')}
+                </p>
+              ) : (
+                notifications.slice(0, 20).map((n) => (
+                  <a
+                    key={n._id}
+                    href={`/chef/proposals/${n.proposalId}`}
+                    onClick={() => {
+                      if (!n.read) markRead(n._id);
+                    }}
+                    className={`flex items-start gap-3 px-5 py-4 text-sm transition hover:bg-white/5 ${
+                      !n.read ? 'border-l-2 border-purple-400 bg-white/[0.02]' : ''
+                    }`}
+                  >
+                    <span
+                      className={`mt-1 h-2 w-2 shrink-0 rounded-full ${typeColor(n.type)}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className={`${!n.read ? 'font-medium text-white/90' : 'text-gray-400'}`}>
+                        {n.message}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-gray-600">
+                        {timeAgo(n.createdAt)}
+                      </p>
+                    </div>
+                    {!n.read && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          markRead(n._id);
+                        }}
+                        className="shrink-0 text-[11px] text-gray-500 hover:text-white"
+                      >
+                        {t('notification.markRead')}
+                      </button>
+                    )}
+                  </a>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

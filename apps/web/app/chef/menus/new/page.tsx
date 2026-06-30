@@ -20,7 +20,7 @@ export default function NewMenuPage() {
 
     try {
       await api.post('/menus', { name, description: description || undefined });
-      router.push('/menus');
+      router.push('/chef/menus');
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : t('common.error'));
     } finally {
@@ -68,7 +68,7 @@ export default function NewMenuPage() {
           </button>
           <button
             type="button"
-            onClick={() => router.push('/menus')}
+            onClick={() => router.push('/chef/menus')}
             className="rounded-lg bg-white/5 px-6 py-2 text-sm transition hover:bg-white/10"
           >
             {t('common.cancel')}
