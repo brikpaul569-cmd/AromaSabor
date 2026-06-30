@@ -309,6 +309,43 @@ export class ProposalsService {
     return saved;
   }
 
+  async submitItemResponse(token: string, items: { _id: string; itemStatus: string }[]) {
+    const proposal = await this.proposalModel.findOne({ token });
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    this.assertNotExpired(proposal);
+    if (!['enviado', 'modificado_por_chef'].includes(proposal.status)) {
+      throw new BadRequestException(
+        `Cannot respond to proposal with status "${proposal.status}". Only "enviado" or "modificado_por_chef" proposals can be responded to.`,
+      );
+    }
+
+    // Validate and update each item's status
+    for (const response of items) {
+      const item = (proposal.items as any[]).find((i) => i._id.toString() === response._id);
+      if (!item) {
+        throw new BadRequestException(`Item "${response._id}" not found in proposal`);
+      }
+      if (!['pendiente', 'aceptado', 'rechazado'].includes(response.itemStatus)) {
+        throw new BadRequestException(`Invalid item status "${response.itemStatus}"`);
+      }
+      item.itemStatus = response.itemStatus;
+    }
+
+    // Transition to respuesta_parcial
+    assertValidTransition(proposal.status, 'respuesta_parcial');
+    proposal.status = 'respuesta_parcial';
+
+    const saved = await this.saveWithHistory(proposal, 'cliente', [...proposal.items] as ProposalItem[], 'Client responded to items');
+
+    await this.notificationsService.create({
+      proposalId: proposal._id,
+      type: 'proposal_client_responded',
+      message: `El cliente respondió a los items de la propuesta para ${proposal.clientName}`,
+    });
+
+    return saved;
+  }
+
   async transitionStatus(id: string, toStatus: string, modifiedBy: 'chef' | 'cliente', reason?: string) {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
     const proposal = await this.proposalModel.findById(id);

@@ -71,6 +71,14 @@ export class ProposalsController {
     return this.proposalsService.updateByToken(token, body);
   }
 
+  @Patch('token/:token/respond')
+  respondItems(
+    @Param('token') token: string,
+    @Body() body: { items: { _id: string; itemStatus: string }[] },
+  ) {
+    return this.proposalsService.submitItemResponse(token, body.items);
+  }
+
   @Patch('token/:token/approve')
   approveByToken(@Param('token') token: string) {
     return this.proposalsService.approveByToken(token);
