@@ -2,9 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 
 export const TRANSITIONS: Record<string, string[]> = {
   borrador: ['enviado'],
-  enviado: ['modificado_por_cliente', 'modificado_por_chef', 'aceptado', 'rechazado', 'expirado'],
+  enviado: ['modificado_por_cliente', 'modificado_por_chef', 'respuesta_parcial', 'aceptado', 'rechazado', 'expirado'],
   modificado_por_cliente: ['modificado_por_chef', 'aceptado', 'rechazado', 'expirado'],
-  modificado_por_chef: ['modificado_por_cliente', 'aceptado', 'rechazado', 'expirado'],
+  modificado_por_chef: ['modificado_por_cliente', 'respuesta_parcial', 'aceptado', 'rechazado', 'expirado'],
+  respuesta_parcial: ['modificado_por_chef', 'aceptado', 'rechazado', 'expirado'],
   aceptado: [],
   rechazado: [],
   expirado: [],

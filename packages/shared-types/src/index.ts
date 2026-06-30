@@ -1,4 +1,5 @@
-export type ProposalStatus = 'borrador' | 'enviado' | 'modificado_por_cliente' | 'modificado_por_chef' | 'aceptado' | 'rechazado' | 'expirado';
+export type ProposalStatus = 'borrador' | 'enviado' | 'modificado_por_cliente' | 'modificado_por_chef' | 'respuesta_parcial' | 'aceptado' | 'rechazado' | 'expirado';
+export type ItemStatus = 'pendiente' | 'aceptado' | 'rechazado';
 export type EditorRole = 'chef' | 'cliente';
 
 export interface Admin {
@@ -52,6 +53,7 @@ export interface ProposalItem {
   portionGrams?: number;
   unit: string;
   quantity: number;
+  itemStatus: ItemStatus;
 }
 
 export interface EditHistoryEntry {
@@ -81,7 +83,7 @@ export interface Proposal {
   updatedAt: string;
 }
 
-export type NotificationType = 'proposal_created' | 'proposal_updated' | 'proposal_accepted' | 'proposal_rejected' | 'proposal_expired';
+export type NotificationType = 'proposal_created' | 'proposal_updated' | 'proposal_accepted' | 'proposal_rejected' | 'proposal_expired' | 'proposal_client_responded';
 
 export interface Notification {
   _id: string;

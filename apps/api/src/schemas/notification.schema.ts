@@ -10,7 +10,7 @@ export class Notification {
 
   @Prop({
     required: true,
-    enum: ['proposal_created', 'proposal_updated', 'proposal_accepted', 'proposal_rejected', 'proposal_expired'],
+    enum: ['proposal_created', 'proposal_updated', 'proposal_accepted', 'proposal_rejected', 'proposal_expired', 'proposal_client_responded'],
   })
   type!: string;
 
