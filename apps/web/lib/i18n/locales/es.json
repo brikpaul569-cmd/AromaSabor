@@ -198,6 +198,10 @@
   "public.menu.notFound": "Menú no encontrado",
   "public.menu.notFoundDesc": "Es posible que este menú aún no se haya publicado.",
 
+  "shortCode.copyUrl": "Copiar enlace",
+  "shortCode.copied": "¡Copiado!",
+  "shortCode.shareUrl": "Compartir este enlace",
+
   "public.proposal.loading": "Cargando propuesta...",
   "public.proposal.notFound": "Propuesta no encontrada",
   "public.proposal.notFoundDesc": "El enlace puede ser inválido o haber vencido.",

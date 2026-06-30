@@ -198,6 +198,10 @@
   "public.menu.notFound": "Menu not found",
   "public.menu.notFoundDesc": "This menu may not be published yet.",
 
+  "shortCode.copyUrl": "Copy URL",
+  "shortCode.copied": "Copied!",
+  "shortCode.shareUrl": "Share this link",
+
   "public.proposal.loading": "Loading proposal...",
   "public.proposal.notFound": "Proposal not found",
   "public.proposal.notFoundDesc": "The link may be invalid or expired.",
