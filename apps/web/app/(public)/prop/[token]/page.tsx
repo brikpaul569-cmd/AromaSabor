@@ -88,7 +88,7 @@ export default function PublicProposalPage() {
     async (items, guestCount, reason) => {
       setIsSaving(true);
       try {
-        await api.patch(`/proposals/${token}/items`, { items, guestCount, reason });
+        await api.patch(`/proposals/token/${token}/items`, { items, guestCount, reason });
         const updated = await api.get<Proposal>(`/proposals/${token}`);
         setProposal(updated);
         setIsEditing(false);
@@ -105,7 +105,7 @@ export default function PublicProposalPage() {
     setIsApproving(true);
     setActionMsg(null);
     try {
-      const updated = await api.patch<Proposal>(`/proposals/${token}/approve`);
+      const updated = await api.patch<Proposal>(`/proposals/token/${token}/approve`);
       setProposal(updated);
     } catch (err: any) {
       setActionMsg(err.message || 'Error al aprobar');
@@ -118,7 +118,7 @@ export default function PublicProposalPage() {
     setIsApproving(true);
     setActionMsg(null);
     try {
-      const updated = await api.patch<Proposal>(`/proposals/${token}/reject`);
+      const updated = await api.patch<Proposal>(`/proposals/token/${token}/reject`);
       setProposal(updated);
     } catch (err: any) {
       setActionMsg(err.message || 'Error al rechazar');

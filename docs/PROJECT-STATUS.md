@@ -95,8 +95,9 @@ Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access, Expiration, QR) ✅
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing) ✅
 Sprint 7 (1 week)  → Stories 19-20 (Approve/reject + notifications) ✅
-                      ─────────
-                        10 weeks
+                       ─────────
+                         10 weeks
+                       ✅ MVP COMPLETE
 ```
 
 ---

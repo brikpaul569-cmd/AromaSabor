@@ -58,7 +58,7 @@ export class ProposalsController {
     return this.proposalsService.findByToken(token);
   }
 
-  @Patch(':token/items')
+  @Patch('token/:token/items')
   updateByToken(
     @Param('token') token: string,
     @Body() body: { items: any[]; guestCount?: number; reason?: string },
@@ -66,12 +66,12 @@ export class ProposalsController {
     return this.proposalsService.updateByToken(token, body);
   }
 
-  @Patch(':token/approve')
+  @Patch('token/:token/approve')
   approveByToken(@Param('token') token: string) {
     return this.proposalsService.approveByToken(token);
   }
 
-  @Patch(':token/reject')
+  @Patch('token/:token/reject')
   rejectByToken(@Param('token') token: string) {
     return this.proposalsService.rejectByToken(token);
   }
