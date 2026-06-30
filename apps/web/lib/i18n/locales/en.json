@@ -150,12 +150,25 @@
   "proposals.detail.approve": "Approve",
   "proposals.detail.reject": "Reject",
 
+  "itemStatus.pending": "Pending",
+  "itemStatus.accepted": "Accepted",
+  "itemStatus.rejected": "Rejected",
+  "itemStatus.accept": "Accept",
+  "itemStatus.reject": "Reject",
+  "itemStatus.sendResponse": "Send Response",
+  "itemStatus.sending": "Sending...",
+  "itemStatus.responseSent": "Response sent",
+  "itemStatus.waitingChef": "Waiting for chef's response",
+  "itemStatus.clientAccepted": "Client accepted",
+  "itemStatus.clientRejected": "Client rejected",
+
   "status.borrador": "Draft",
   "status.enviado": "Sent",
   "status.modificado_por_cliente": "Modified by client",
   "status.modificado_por_chef": "Modified by chef",
   "status.aceptado": "Approved",
   "status.rechazado": "Rejected",
+  "status.respuesta_parcial": "Partial client response",
   "status.expirado": "Expired",
   "status.active": "Active",
 
@@ -239,5 +252,6 @@
   "notification.proposalApproved": "Proposal approved",
   "notification.proposalRejected": "Proposal rejected",
   "notification.proposalExpired": "Proposal expired",
-  "notification.proposalModified": "Proposal modified"
+  "notification.proposalModified": "Proposal modified",
+  "notification.proposalClientResponded": "Client responded to items"
 }

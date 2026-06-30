@@ -150,12 +150,25 @@
   "proposals.detail.approve": "Aprobar",
   "proposals.detail.reject": "Rechazar",
 
+  "itemStatus.pending": "Pendiente",
+  "itemStatus.accepted": "Aceptado",
+  "itemStatus.rejected": "Rechazado",
+  "itemStatus.accept": "Aceptar",
+  "itemStatus.reject": "Rechazar",
+  "itemStatus.sendResponse": "Enviar respuesta",
+  "itemStatus.sending": "Enviando...",
+  "itemStatus.responseSent": "Respuesta enviada",
+  "itemStatus.waitingChef": "Esperando respuesta del chef",
+  "itemStatus.clientAccepted": "Cliente aceptó",
+  "itemStatus.clientRejected": "Cliente rechazó",
+
   "status.borrador": "Borrador",
   "status.enviado": "Enviada",
   "status.modificado_por_cliente": "Modificada por el cliente",
   "status.modificado_por_chef": "Modificada por el chef",
   "status.aceptado": "Aprobada",
   "status.rechazado": "Rechazada",
+  "status.respuesta_parcial": "Respuesta parcial del cliente",
   "status.expirado": "Vencida",
   "status.active": "Activa",
 
@@ -239,5 +252,6 @@
   "notification.proposalApproved": "Propuesta aprobada",
   "notification.proposalRejected": "Propuesta rechazada",
   "notification.proposalExpired": "Propuesta vencida",
-  "notification.proposalModified": "Propuesta modificada"
+  "notification.proposalModified": "Propuesta modificada",
+  "notification.proposalClientResponded": "El cliente respondió a los items"
 }
