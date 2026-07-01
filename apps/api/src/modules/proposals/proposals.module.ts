@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProposalsController } from './proposals.controller';
+import { ClientProposalsController } from './client-proposals.controller';
 import { ProposalsService } from './proposals.service';
 import { Proposal, ProposalSchema } from '../../schemas/proposal.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -10,7 +11,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     MongooseModule.forFeature([{ name: Proposal.name, schema: ProposalSchema }]),
     NotificationsModule,
   ],
-  controllers: [ProposalsController],
+  controllers: [ClientProposalsController, ProposalsController],
   providers: [ProposalsService],
   exports: [ProposalsService],
 })

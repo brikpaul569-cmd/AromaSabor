@@ -194,6 +194,73 @@ export class ProposalsService {
     }
   }
 
+  async findByClientId(clientId: string) {
+    if (!Types.ObjectId.isValid(clientId)) throw new NotFoundException('Invalid client ID');
+    return this.proposalModel
+      .find({ clientId: new Types.ObjectId(clientId) })
+      .sort({ updatedAt: -1 })
+      .populate('menuId', 'name');
+  }
+
+  async findByIdAndClient(id: string, clientId: string) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
+    if (!Types.ObjectId.isValid(clientId)) throw new NotFoundException('Invalid client ID');
+    const proposal = await this.proposalModel
+      .findOne({ _id: id, clientId: new Types.ObjectId(clientId) })
+      .populate('menuId')
+      .populate('createdBy', 'name email');
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    return proposal;
+  }
+
+  async updateByClient(
+    id: string,
+    clientId: string,
+    data: { items?: ProposalItem[]; guestCount?: number },
+  ) {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
+    if (!Types.ObjectId.isValid(clientId)) throw new NotFoundException('Invalid client ID');
+    const proposal = await this.proposalModel.findOne({
+      _id: id,
+      clientId: new Types.ObjectId(clientId),
+    });
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    if (proposal.status === 'expirado') {
+      throw new ConflictException('This proposal has expired and cannot be modified');
+    }
+    if (['aceptado', 'rechazado'].includes(proposal.status)) {
+      throw new ConflictException(`Cannot modify a proposal with status "${proposal.status}"`);
+    }
+
+    const previousItems = [...proposal.items] as ProposalItem[];
+
+    if (data.items !== undefined) {
+      proposal.items = data.items as any;
+    }
+    if (data.guestCount !== undefined) {
+      proposal.guestCount = data.guestCount;
+    }
+
+    if (data.items) {
+      const pricing = this.recalculate(proposal);
+      proposal.pricePerPlate = pricing.pricePerPlate;
+      proposal.quotation = pricing.quotation;
+      proposal.totalPrice = pricing.quotation;
+      assertValidTransition(proposal.status, 'modificado_por_cliente');
+      proposal.status = 'modificado_por_cliente';
+    }
+
+    const saved = await this.saveWithHistory(proposal, 'cliente', previousItems);
+    if (data.items) {
+      await this.notificationsService.create({
+        proposalId: proposal._id,
+        type: 'proposal_updated',
+        message: `El cliente modificó la propuesta para ${proposal.clientName}`,
+      });
+    }
+    return saved;
+  }
+
   async findByToken(token: string) {
     const proposal = await this.proposalModel.findOne({ token }).populate('menuId');
     if (!proposal) throw new NotFoundException('Proposal not found');

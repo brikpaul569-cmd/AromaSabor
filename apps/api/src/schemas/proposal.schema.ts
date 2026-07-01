@@ -146,6 +146,9 @@ export class Proposal {
   @Prop()
   viewedAt?: Date;
 
+  @Prop({ type: Types.ObjectId, ref: 'Client', default: null })
+  clientId?: Types.ObjectId | null;
+
   @Prop({ enum: ['chef', 'cliente'] })
   lastModifiedBy?: string;
 

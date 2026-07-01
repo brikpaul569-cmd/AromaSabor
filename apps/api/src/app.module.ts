@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
+import { ClientAuthModule } from './modules/client-auth/client-auth.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { ProposalsModule } from './modules/proposals/proposals.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -17,6 +18,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
       }),
     }),
     AuthModule,
+    ClientAuthModule,
     MenusModule,
     ProposalsModule,
     NotificationsModule,
