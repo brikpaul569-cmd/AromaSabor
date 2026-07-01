@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { api } from '@/lib/api';
+import { api, ApiClientError } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 
 interface MenuItem {
@@ -24,7 +24,13 @@ export default function MenusPage() {
   useEffect(() => {
     api.get<MenuItem[]>('/menus')
       .then(setMenus)
-      .catch(() => router.push('/login'))
+      .catch((err) => {
+        if (err instanceof ApiClientError && err.statusCode === 401) {
+          router.push('/login');
+        } else {
+          setMenus([]);
+        }
+      })
       .finally(() => setLoading(false));
   }, [router]);
 

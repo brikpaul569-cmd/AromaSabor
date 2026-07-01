@@ -358,8 +358,13 @@ export class ProposalsService {
 
   async findById(id: string) {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
-    const proposal = await this.proposalModel.findById(id).populate('createdBy', 'name email').populate('menuId', 'name');
+    const proposal = await this.proposalModel.findById(id).populate('createdBy', 'name email').populate('menuId', 'name slug');
     if (!proposal) throw new NotFoundException('Proposal not found');
+    // Lazy shortCode generation — ensures chefs see the short URL immediately
+    if (!proposal.shortCode) {
+      proposal.shortCode = await this.generateShortCode();
+      await proposal.save();
+    }
     return proposal;
   }
 

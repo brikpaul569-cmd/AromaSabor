@@ -35,6 +35,7 @@ interface EditHistoryEntry {
 interface MenuRef {
   _id: string;
   name: string;
+  slug: string;
 }
 
 interface AdminRef {
@@ -61,6 +62,7 @@ interface Proposal {
   notes?: string;
   items: ProposalItem[];
   menuId: MenuRef;
+  shortCode?: string;
   createdBy: AdminRef;
   createdAt: string;
   expiresAt: string;
@@ -128,8 +130,7 @@ export default function ProposalDetailPage() {
 
   useEffect(() => {
     if (proposal && !qrGenerated.current) {
-      const url = `${window.location.origin}/prop/${proposal.token}`;
-      QRCode.toDataURL(url, { width: 200, margin: 1 })
+      QRCode.toDataURL(publicUrl, { width: 400, margin: 2 })
         .then(setQrDataUrl)
         .catch(() => {});
       qrGenerated.current = true;
@@ -203,7 +204,7 @@ export default function ProposalDetailPage() {
   );
 
   const handleCopyLink = async () => {
-    const url = `${window.location.origin}/prop/${proposal?.token}`;
+    const url = publicUrl;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -239,7 +240,10 @@ export default function ProposalDetailPage() {
     );
   }
 
-  const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/prop/${proposal.token}`;
+  const shortUrl = proposal.shortCode && proposal.menuId?.slug
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/c/${proposal.menuId.slug}/${proposal.shortCode}`
+    : null;
+  const publicUrl = shortUrl || `${typeof window !== 'undefined' ? window.location.origin : ''}/prop/${proposal.token}`;
   const canSend = proposal.status === 'borrador';
   const canApprove = ['enviado', 'modificado_por_cliente', 'modificado_por_chef'].includes(proposal.status);
   const canReject = ['enviado', 'modificado_por_cliente', 'modificado_por_chef'].includes(proposal.status);
@@ -326,7 +330,7 @@ export default function ProposalDetailPage() {
             </div>
             {qrDataUrl && (
               <div className="shrink-0">
-                <img src={qrDataUrl} alt="QR Code" className="h-20 w-20 rounded-md" />
+                <img src={qrDataUrl} alt="QR Code" className="h-40 w-40 rounded-md" />
               </div>
             )}
           </div>
