@@ -253,5 +253,21 @@
   "notification.proposalRejected": "Proposal rejected",
   "notification.proposalExpired": "Proposal expired",
   "notification.proposalModified": "Proposal modified",
-  "notification.proposalClientResponded": "Client responded to items"
+  "notification.proposalClientResponded": "Client responded to items",
+
+  "claim.title": "Are you {name}?",
+  "claim.confirm": "Yes, that's me",
+  "claim.guest": "Continue as guest",
+  "claim.namePlaceholder": "Your name",
+
+  "timeline.title": "Timeline",
+  "timeline.created": "Proposal created",
+  "timeline.sent": "Sent to client",
+  "timeline.chef_modified": "Modified by chef",
+  "timeline.client_modified": "Modified by client",
+  "timeline.client_responded": "Client responded per item",
+  "timeline.claimed": "Client identified",
+  "timeline.accepted": "Accepted",
+  "timeline.rejected": "Rejected",
+  "timeline.expired": "Expired"
 }

@@ -79,8 +79,18 @@ export interface Proposal {
   lastModifiedBy?: EditorRole;
   lastModifiedAt?: string;
   editHistory?: EditHistoryEntry[];
+  claimedAt?: string;
+  claimedByClientName?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TimelineEvent {
+  type: 'created' | 'sent' | 'chef_modified' | 'client_modified'
+      | 'client_responded' | 'claimed' | 'accepted' | 'rejected' | 'expired';
+  timestamp: string;
+  label: string;
+  description?: string;
 }
 
 export type NotificationType = 'proposal_created' | 'proposal_updated' | 'proposal_accepted' | 'proposal_rejected' | 'proposal_expired' | 'proposal_client_responded';

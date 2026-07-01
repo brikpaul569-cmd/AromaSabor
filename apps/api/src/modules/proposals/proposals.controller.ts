@@ -3,6 +3,7 @@ import { ProposalsService } from './proposals.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateProposalDto } from './dto/create-proposal.dto';
+import { ClaimDto } from './dto/claim.dto';
 
 @Controller('proposals')
 export class ProposalsController {
@@ -53,6 +54,12 @@ export class ProposalsController {
     return this.proposalsService.getHistory(id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('id/:id/timeline')
+  getTimeline(@Param('id') id: string) {
+    return this.proposalsService.getTimeline(id);
+  }
+
   @Get('code/:shortCode')
   findByShortCode(@Param('shortCode') shortCode: string) {
     return this.proposalsService.findByShortCode(shortCode);
@@ -87,6 +94,11 @@ export class ProposalsController {
   @Patch('token/:token/reject')
   rejectByToken(@Param('token') token: string) {
     return this.proposalsService.rejectByToken(token);
+  }
+
+  @Post('token/:token/claim')
+  claim(@Param('token') token: string, @Body() dto: ClaimDto) {
+    return this.proposalsService.claim(token, dto.clientName);
   }
 
   @UseGuards(JwtAuthGuard)

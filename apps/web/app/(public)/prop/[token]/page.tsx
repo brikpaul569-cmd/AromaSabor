@@ -8,6 +8,9 @@ import PricingBreakdown from '@/components/PricingBreakdown';
 import ProposalPlateEditor from '@/components/ProposalPlateEditor';
 import type { ProposalPlateEditorProps } from '@/components/ProposalPlateEditor';
 import ItemStatusToggle from '@/components/ItemStatusToggle';
+import ClientIdentityDialog from '@/components/ClientIdentityDialog';
+import ProposalTimeline from '@/components/ProposalTimeline';
+import type { TimelineEvent } from '@/components/ProposalTimeline';
 
 interface ProposalItem {
   _id: string;
@@ -29,6 +32,7 @@ interface MenuRef {
 
 interface Proposal {
   _id: string;
+  token: string;
   clientName: string;
   eventDate: string;
   guestCount: number;
@@ -38,8 +42,11 @@ interface Proposal {
   items: ProposalItem[];
   menuId: MenuRef;
   createdAt: string;
+  updatedAt: string;
   expiresAt: string;
   viewedAt?: string;
+  claimedAt?: string;
+  claimedByClientName?: string;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -77,6 +84,10 @@ export default function PublicProposalPage() {
   const [isApproving, setIsApproving] = useState(false);
   const [isSendingResponse, setIsSendingResponse] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+
+  // Client identity state
+  const [claimedName, setClaimedName] = useState<string | null>(null);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
 
   // Item response state — tracks per-item toggles before submission
   const [itemStatuses, setItemStatuses] = useState<Record<string, string>>({});
@@ -156,6 +167,53 @@ export default function PublicProposalPage() {
     }
   }, [proposal, token, itemStatuses]);
 
+  const handleClaim = useCallback(async (name: string) => {
+    setClaimedName(name);
+    try {
+      await api.post(`/proposals/token/${token}/claim`, { clientName: name });
+    } catch {
+      // Claim is best-effort — the UI works either way
+    }
+  }, [token]);
+
+  // Derive timeline events from proposal data
+  useEffect(() => {
+    if (!proposal) return;
+    const events: TimelineEvent[] = [];
+
+    // created
+    events.push({ type: 'created', timestamp: proposal.createdAt, label: '' });
+
+    // sent — if proposal is not a draft
+    if (proposal.status !== 'borrador') {
+      events.push({ type: 'sent', timestamp: proposal.updatedAt, label: '' });
+    }
+
+    // claimed
+    if (proposal.claimedAt) {
+      events.push({
+        type: 'claimed',
+        timestamp: proposal.claimedAt,
+        label: '',
+        description: proposal.claimedByClientName
+          ? `Se identificó como ${proposal.claimedByClientName}`
+          : undefined,
+      });
+    }
+
+    // Terminal statuses
+    if (proposal.status === 'aceptado') {
+      events.push({ type: 'accepted', timestamp: proposal.updatedAt, label: '' });
+    } else if (proposal.status === 'rechazado') {
+      events.push({ type: 'rejected', timestamp: proposal.updatedAt, label: '' });
+    } else if (proposal.status === 'expirado') {
+      events.push({ type: 'expired', timestamp: proposal.expiresAt, label: '' });
+    }
+
+    events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    setTimelineEvents(events);
+  }, [proposal]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
@@ -184,6 +242,8 @@ export default function PublicProposalPage() {
 
   if (!proposal) return null;
 
+  const isClaimed = !!claimedName || !!proposal.claimedAt;
+
   // Initialize item statuses from proposal data when proposal loads
   if (Object.keys(itemStatuses).length === 0 && proposal.items.length > 0) {
     const initial: Record<string, string> = {};
@@ -209,6 +269,22 @@ export default function PublicProposalPage() {
   const uniqueCategories = [...new Map(proposal.items.map((i) => [i.categoryId, { id: i.categoryId, label: i.categoryLabel }])).values()];
 
   return (
+    <>
+      {!isExpired && !isTerminal && (
+        <ClientIdentityDialog
+          proposalClientName={proposal.clientName}
+          proposalToken={proposal.token}
+          onClaim={handleClaim}
+          isClaimed={isClaimed}
+        />
+      )}
+
+      {timelineEvents.length > 0 && !isEditing && (
+        <div className="fixed bottom-4 left-4 z-40 w-80 max-h-[60vh] overflow-y-auto rounded-lg">
+          <ProposalTimeline events={timelineEvents} />
+        </div>
+      )}
+
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       <div className="mx-auto max-w-3xl p-8">
         {isExpired && (
@@ -374,5 +450,6 @@ export default function PublicProposalPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

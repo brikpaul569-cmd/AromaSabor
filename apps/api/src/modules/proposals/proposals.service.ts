@@ -492,6 +492,138 @@ export class ProposalsService {
     return saved;
   }
 
+  async claim(token: string, clientName: string) {
+    const proposal = await this.proposalModel.findOne({ token });
+    if (!proposal) throw new NotFoundException('Proposal not found');
+    // Only allow claiming for proposals that have been sent
+    if (proposal.status === 'borrador') {
+      throw new BadRequestException('Cannot claim a draft proposal');
+    }
+
+    // Idempotent: only set claimedAt on first claim, but allow name update
+    if (!proposal.claimedAt) {
+      proposal.claimedAt = new Date();
+    }
+    proposal.claimedByClientName = clientName;
+
+    return proposal.save();
+  }
+
+  async getTimeline(id: string): Promise<{ type: string; timestamp: string; label: string; description?: string }[]> {
+    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid proposal ID');
+    const proposal = await this.proposalModel.findById(id);
+    if (!proposal) throw new NotFoundException('Proposal not found');
+
+    const doc = proposal as any;
+    const events: { type: string; timestamp: string; label: string; description?: string }[] = [];
+
+    // created — from createdAt
+    events.push({
+      type: 'created',
+      timestamp: doc.createdAt?.toISOString?.() || doc.createdAt,
+      label: 'Propuesta creada',
+    });
+
+    // sent — if proposal is not a draft
+    if (proposal.status !== 'borrador') {
+      const sentEntry = (proposal.editHistory || []).find(
+        (e: any) => e.reason === 'Sent to client' || e.note === 'Sent to client',
+      );
+      events.push({
+        type: 'sent',
+        timestamp: sentEntry?.modifiedAt
+          ? new Date(sentEntry.modifiedAt).toISOString()
+          : (doc.updatedAt?.toISOString?.() || doc.updatedAt),
+        label: 'Enviada al cliente',
+      });
+    }
+
+    // claimed — from claimedAt
+    if (proposal.claimedAt) {
+      events.push({
+        type: 'claimed',
+        timestamp: new Date(proposal.claimedAt).toISOString(),
+        label: 'Cliente identificado',
+        description: proposal.claimedByClientName
+          ? `Se identificó como ${proposal.claimedByClientName}`
+          : undefined,
+      });
+    }
+
+    // editHistory entries → chef_modified / client_modified
+    if (proposal.editHistory) {
+      for (const entry of proposal.editHistory) {
+        const modifiedAt = new Date(entry.modifiedAt).toISOString();
+        if (entry.modifiedBy === 'chef') {
+          if (entry.reason === 'Sent to client') continue;
+          events.push({
+            type: 'chef_modified',
+            timestamp: modifiedAt,
+            label: 'Modificada por el chef',
+            description: entry.note || entry.reason,
+          });
+        } else if (entry.modifiedBy === 'cliente') {
+          if (entry.reason === 'Proposal approved' || entry.reason === 'Proposal rejected') continue;
+          if (entry.reason === 'Client responded to items') {
+            events.push({
+              type: 'client_responded',
+              timestamp: modifiedAt,
+              label: 'Cliente respondió por ítem',
+              description: entry.note,
+            });
+          } else {
+            events.push({
+              type: 'client_modified',
+              timestamp: modifiedAt,
+              label: 'Modificada por el cliente',
+              description: entry.note || entry.reason,
+            });
+          }
+        }
+      }
+    }
+
+    // Terminal statuses
+    if (proposal.status === 'aceptado') {
+      const acceptEntry = [...(proposal.editHistory || [])]
+        .reverse()
+        .find((e: any) => e.reason === 'Proposal approved');
+      events.push({
+        type: 'accepted',
+        timestamp: acceptEntry
+          ? new Date(acceptEntry.modifiedAt).toISOString()
+          : (doc.updatedAt?.toISOString?.() || doc.updatedAt),
+        label: 'Aceptada',
+      });
+    }
+
+    if (proposal.status === 'rechazado') {
+      const rejectEntry = [...(proposal.editHistory || [])]
+        .reverse()
+        .find((e: any) => e.reason === 'Proposal rejected');
+      events.push({
+        type: 'rejected',
+        timestamp: rejectEntry
+          ? new Date(rejectEntry.modifiedAt).toISOString()
+          : (doc.updatedAt?.toISOString?.() || doc.updatedAt),
+        label: 'Rechazada',
+      });
+    }
+
+    if (proposal.status === 'expirado') {
+      events.push({
+        type: 'expired',
+        timestamp: proposal.expiresAt.toISOString(),
+        label: 'Expirada',
+      });
+    }
+
+    // Sort events chronologically by timestamp
+    events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    return events;
+  }
+
   async remove(id: string) {
     const proposal = await this.proposalModel.findByIdAndDelete(id);
     if (!proposal) throw new NotFoundException('Proposal not found');

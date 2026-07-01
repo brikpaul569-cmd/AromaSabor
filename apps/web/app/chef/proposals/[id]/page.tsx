@@ -10,6 +10,8 @@ import PricingBreakdown from '@/components/PricingBreakdown';
 import ProposalPlateEditor from '@/components/ProposalPlateEditor';
 import type { ProposalPlateEditorProps } from '@/components/ProposalPlateEditor';
 import QRCode from 'qrcode';
+import ProposalTimeline from '@/components/ProposalTimeline';
+import type { TimelineEvent } from '@/components/ProposalTimeline';
 
 interface ProposalItem {
   _id: string;
@@ -114,6 +116,8 @@ export default function ProposalDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const qrGenerated = useRef(false);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
 
   useEffect(() => {
     api.get<Proposal>(`/proposals/id/${id}`)
@@ -130,6 +134,16 @@ export default function ProposalDetailPage() {
         .catch(() => {});
       qrGenerated.current = true;
     }
+  }, [proposal]);
+
+  // Fetch timeline when proposal loads
+  useEffect(() => {
+    if (!proposal) return;
+    setTimelineLoading(true);
+    api.get<TimelineEvent[]>(`/proposals/id/${id}/timeline`)
+      .then(setTimelineEvents)
+      .catch(() => {})
+      .finally(() => setTimelineLoading(false));
   }, [proposal]);
 
   const loadHistory = async () => {
@@ -438,6 +452,13 @@ export default function ProposalDetailPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Timeline */}
+      {!timelineLoading && timelineEvents.length > 0 && (
+        <div className="mt-8">
+          <ProposalTimeline events={timelineEvents} />
         </div>
       )}
 

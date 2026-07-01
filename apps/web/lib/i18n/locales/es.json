@@ -253,5 +253,21 @@
   "notification.proposalRejected": "Propuesta rechazada",
   "notification.proposalExpired": "Propuesta vencida",
   "notification.proposalModified": "Propuesta modificada",
-  "notification.proposalClientResponded": "El cliente respondió a los items"
+  "notification.proposalClientResponded": "El cliente respondió a los items",
+
+  "claim.title": "¿Eres {name}?",
+  "claim.confirm": "Sí, soy yo",
+  "claim.guest": "Continuar como invitado",
+  "claim.namePlaceholder": "Tu nombre",
+
+  "timeline.title": "Línea de tiempo",
+  "timeline.created": "Propuesta creada",
+  "timeline.sent": "Enviada al cliente",
+  "timeline.chef_modified": "Modificada por el chef",
+  "timeline.client_modified": "Modificada por el cliente",
+  "timeline.client_responded": "Cliente respondió por ítem",
+  "timeline.claimed": "Cliente identificado",
+  "timeline.accepted": "Aceptada",
+  "timeline.rejected": "Rechazada",
+  "timeline.expired": "Expirada"
 }

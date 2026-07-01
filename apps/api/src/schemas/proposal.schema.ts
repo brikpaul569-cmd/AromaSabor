@@ -138,6 +138,12 @@ export class Proposal {
   shortCode?: string;
 
   @Prop()
+  claimedAt?: Date;
+
+  @Prop()
+  claimedByClientName?: string;
+
+  @Prop()
   viewedAt?: Date;
 
   @Prop({ enum: ['chef', 'cliente'] })
