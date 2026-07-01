@@ -60,6 +60,7 @@ export default function ClientIdentityDialog({
         <div className="mt-6 space-y-3">
           <button
             onClick={handleConfirm}
+            data-testid="claim-confirm"
             className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-green-700"
           >
             {t('claim.confirm')}

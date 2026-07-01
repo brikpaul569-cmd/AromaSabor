@@ -23,7 +23,7 @@ export default function ItemStatusToggle({
   const isRejected = currentStatus === 'rechazado';
 
   return (
-    <div className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
+    <div data-testid={`item-toggle-${itemName.toLowerCase().replace(/\s+/g, '-')}`} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
       <span className="text-sm text-gray-300">{itemName}</span>
       <div className="flex items-center gap-2">
         {/* Aceptar button */}

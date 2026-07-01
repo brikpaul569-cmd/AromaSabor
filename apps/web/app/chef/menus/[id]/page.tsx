@@ -251,6 +251,7 @@ export default function MenuEditorPage() {
             }
           }}
           disabled={publishing}
+          data-testid="toggle-publish"
           className={`shrink-0 rounded-lg px-5 py-2 text-sm font-medium transition disabled:opacity-50 ${
             menu.isActive
               ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
