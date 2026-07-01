@@ -1,8 +1,8 @@
 # Project Status — AromaSabor
 
 > **Date:** 2026-06-30
-> **Phase:** MVP Complete ✅ (all 20 stories implemented)
-> **Remaining:** Bug fixes, UX polish, E2E verification, images in bowl builder (deferred)
+> **Phase:** MVP Complete ✅ | Client-Experience enhancement underway (PR 1 ✅, PR 2 🚧)
+> **Remaining:** Client-Experience PR 2 (Claim, Timeline), push PR 1 to remote, E2E verification, volume pricing (pending spec), images in bowl builder (deferred)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -690,9 +690,12 @@ Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipo
 
 ### Remaining
 
-1. **Images in bowl builder** — Deferred per user request
-2. **E2E test** — Verify full flow end-to-end
-3. **Volume pricing (Colombian pesos)** — Extra feature requested by user
+1. **Git: push PR 1 to remote** — `develop` local está adelante de `origin/develop` (shortCode commits sin pushear)
+2. **Client-Experience PR 2** — Complete Claim + Timeline components, merge to develop
+3. **Client-Experience PR 3** — Notification integration for new events (proposal_client_responded, etc.)
+4. **E2E test** — Verify full flow end-to-end
+5. **Images in bowl builder** — Deferred per user request
+6. **Volume pricing (Colombian pesos)** — Extra feature requested by user (no spec yet)
 
 ### Route changes (already done ✅)
 
@@ -702,3 +705,70 @@ Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipo
 | `/proposals` | `/chef/proposals` |
 | `/menus` | `/chef/menus` |
 | `(admin)/login` | `/login` |
+
+---
+
+## 26. Client-Experience Enhancement (SDD Change)
+
+> **Branch:** `feat/client-experience-pr2` (basada en `develop` local)
+> **Planning:** SDD with auto-chain delivery (stacked-to-develop)
+> **PR 1:** ShortCodes + `/c/` route — ✅ Merged to local `develop`
+> **PR 2:** ItemStatus + respuesta_parcial — 🚧 In progress (4/6 tasks done)
+> **PR 3:** Timeline + notifications — ⏳ Planned
+
+### PR 1 — ShortCodes + `/c/` Route ✅
+
+**Purpose:** Replace opaque UUIDs in client URLs with human-friendly 7-char base58 codes.
+
+| Component | Description |
+|-----------|-------------|
+| `packages/shared-types/src/index.ts` | Added `shortCode?: string` to `Proposal` interface |
+| `apps/api/src/utils/base58.ts` | 7-char encoder (crypto.randomBytes, excludes 0/O/I/l) |
+| `apps/api/src/schemas/proposal.schema.ts` | Added `shortCode` field (`unique: true, sparse: true`) |
+| `apps/api/src/modules/proposals/proposals.service.ts` | `generateShortCode()` with 10-retry collision handling, `findByShortCode()`, lazy generation in `findByToken()` |
+| `apps/api/src/modules/proposals/proposals.controller.ts` | `GET /proposals/code/:shortCode` (registered before `:token` to avoid route conflict) |
+| `apps/web/app/(public)/c/[slug]/[shortCode]/page.tsx` | Public route — same layout as `/prop/[token]` |
+| `apps/web/lib/i18n/locales/{es,en}.json` | Added `shortCode.copyUrl`, `shortCode.copied`, `shortCode.shareUrl` |
+
+**Tests:** ✅ 38 tests pass (5 base58 unit + 13 proposals integration + 20 menus integration)
+
+**Commits (local `develop`):**
+```
+0108693 feat(web): add shortCode i18n keys and /c/[slug]/[shortCode] public route
+3b456d2 feat(api): add shortCode to schema, service, controller, and integration tests
+9328757 feat(api): add base58 encoder with unit tests
+63cdd9f feat(shared): add shortCode field to Proposal interface
+```
+
+### PR 2 — ItemStatus + respuesta_parcial 🚧
+
+**Purpose:** Allow clients to accept/reject individual items in a proposal (partial response), tracked via `itemStatus` per item.
+
+#### Done ✅
+
+| Component | Description | Commit |
+|-----------|-------------|--------|
+| `packages/shared-types/src/index.ts` | Added `ItemStatus` type (`pendiente \| aceptado \| rechazado`), `itemStatus` field in `ProposalItem`, `respuesta_parcial` in `ProposalStatus`, `proposal_client_responded` in `NotificationType` | `d8e2591` |
+| `apps/api/src/modules/proposals/proposals.state-machine.ts` | Added `respuesta_parcial` state with valid transitions: from `enviado`/`modificado_por_chef`, to `modificado_por_chef`/`aceptado`/`rechazado`/`expirado` | `d8e2591` |
+| `apps/api/src/modules/proposals/dto/respond-items.dto.ts` | DTO for `POST /proposals/:id/respond-items` | `2261ba6` |
+| `apps/api/src/modules/proposals/proposals.service.ts` | `submitItemResponse()` — validates token, updates each item's `itemStatus`, transitions to `respuesta_parcial`, creates notification | `2261ba6` |
+| `apps/api/src/modules/proposals/proposals.controller.ts` | `POST /proposals/:id/respond-items` endpoint | `2261ba6` |
+| `apps/api/src/modules/proposals/proposals.integration.test.ts` | Integration tests for submitItemResponse | `2261ba6` |
+| `apps/api/src/modules/proposals/proposals.state-machine.spec.ts` | 12 unit tests for `respuesta_parcial` transitions | `d8e2591` |
+| `apps/web/components/ItemStatusToggle.tsx` | Toggle component with 3 states (pendiente/aceptado/rechazado), color-coded pills (yellow/green/red) | `aaacc18` |
+| `apps/web/lib/i18n/locales/{es,en}.json` | Added `itemStatus.*` keys (pending/accept/reject) | `aaacc18` |
+| `apps/web/app/(public)/prop/[token]/page.tsx` | Integrated ItemStatusToggle for client to respond per item | `07ed415` |
+| `apps/web/app/chef/proposals/[id]/page.tsx` | Chef detail shows itemStatus per item (read-only) | `07ed415` |
+
+#### Pending ❌
+
+| Component | Description |
+|-----------|-------------|
+| `Claim` | Client identity (`claimedAt`, `claimedByClientName`, `ClientIdentityDialog`) |
+| `ProposalTimeline` | Visual timeline component for proposal lifecycle |
+| Notification wiring | Ensure `proposal_client_responded` notifications trigger correctly |
+
+### Notes
+
+- **Git state:** `develop` local tiene PR 1 commits que no están en `origin/develop`. Antes de PR 2 merge, pushear `develop`.
+- **Notification type** `proposal_client_responded` ya existe en shared-types y schema, pero falta asegurar que el frontend las muestre correctamente.
