@@ -204,8 +204,8 @@ export default function PublicProposalPage() {
   const canClientEdit = (proposal.status === 'enviado' || proposal.status === 'modificado_por_chef') && !isExpired;
   const canClientRespond = ['enviado', 'modificado_por_chef'].includes(proposal.status) && !isExpired;
   const isRespuestaParcial = proposal.status === 'respuesta_parcial';
-  const canClientApprove = ['modificado_por_cliente'].includes(proposal.status) && !isTerminal && !isExpired;
   const isTerminal = ['aceptado', 'rechazado', 'expirado'].includes(proposal.status);
+  const canClientApprove = ['modificado_por_cliente'].includes(proposal.status) && !isTerminal && !isExpired;
   const uniqueCategories = [...new Map(proposal.items.map((i) => [i.categoryId, { id: i.categoryId, label: i.categoryLabel }])).values()];
 
   return (

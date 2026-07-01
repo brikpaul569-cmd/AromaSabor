@@ -27,6 +27,7 @@ interface MenuRef {
 
 interface Proposal {
   _id: string;
+  token: string;
   clientName: string;
   eventDate: string;
   guestCount: number;
