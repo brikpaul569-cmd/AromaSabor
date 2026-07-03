@@ -36,16 +36,12 @@ export const usePlateStore = create<PlateStore>((set, get) => ({
   guestCount: 1,
 
   initCategories: (categories) => {
-    const existing = get().selections;
     const updates: Record<string, CategoryItem[]> = {};
     for (const cat of categories) {
-      if (!(cat._id in existing)) {
-        updates[cat._id] = [];
-      }
+      // Preserve existing selections for categories that still exist
+      updates[cat._id] = get().selections[cat._id] || [];
     }
-    if (Object.keys(updates).length > 0) {
-      set((state) => ({ selections: { ...state.selections, ...updates } }));
-    }
+    set({ selections: updates });
   },
 
   selectItem: (categoryId, item, maxItems) =>
