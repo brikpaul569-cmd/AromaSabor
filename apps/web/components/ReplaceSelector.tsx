@@ -17,11 +17,8 @@ interface ReplaceSelectorProps {
   onClose: () => void;
 }
 
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
-}
-
 import { useTranslation } from '@/lib/i18n';
+import { formatPrice } from '@aromasabor/utils';
 
 export default function ReplaceSelector({ categoryLabel, items, currentItemId, onSelect, onClose }: ReplaceSelectorProps) {
   const { t } = useTranslation();

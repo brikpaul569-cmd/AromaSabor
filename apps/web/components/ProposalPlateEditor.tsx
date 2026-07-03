@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
 import type { PricingItem } from '@/components/PricingBreakdown';
+import { formatPrice } from '@aromasabor/utils';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -69,10 +70,6 @@ export interface ProposalPlateEditorProps {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
-}
 
 const fallbackColors = [
   'bg-red-800/50',

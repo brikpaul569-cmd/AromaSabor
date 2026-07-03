@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ApiClientError } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { formatPrice } from '@aromasabor/utils';
 
 interface MenuCategoryItem {
   _id: string;
@@ -31,10 +32,6 @@ interface Menu {
   description?: string;
   categories: MenuCategory[];
   isActive: boolean;
-}
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 export default function MenuEditorPage() {

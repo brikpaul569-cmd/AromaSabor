@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
 import ItemStatusToggle from '@/components/ItemStatusToggle';
+import { formatPrice } from '@aromasabor/utils';
 
 interface ProposalItem {
   _id: string;
@@ -52,10 +53,6 @@ const STATUS_STYLES: Record<string, string> = {
   rechazado: 'bg-red-500/20 text-red-300',
   expirado: 'bg-red-500/20 text-red-300',
 };
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
-}
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('es-CO', {

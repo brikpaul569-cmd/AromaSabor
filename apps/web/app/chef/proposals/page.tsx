@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { formatPrice } from '@aromasabor/utils';
 
 interface Proposal {
   _id: string;
@@ -30,10 +31,6 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const FILTER_OPTIONS = ['all', 'borrador', 'enviado', 'modificado_por_cliente', 'modificado_por_chef', 'aceptado', 'rechazado', 'expirado'] as const;
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
-}
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('es-CO', {

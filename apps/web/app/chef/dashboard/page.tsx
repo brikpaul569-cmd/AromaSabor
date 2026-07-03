@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { formatPrice } from '@aromasabor/utils';
 
 interface AdminUser {
   _id: string;
@@ -24,10 +25,6 @@ interface Proposal {
   status: string;
   quotation: number;
   createdAt: string;
-}
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 /* Status badge */

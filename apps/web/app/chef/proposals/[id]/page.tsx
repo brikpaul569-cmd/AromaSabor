@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
 import ProposalPlateEditor from '@/components/ProposalPlateEditor';
+import { formatPrice } from '@aromasabor/utils';
 import type { ProposalPlateEditorProps } from '@/components/ProposalPlateEditor';
 import QRCode from 'qrcode';
 import ProposalTimeline from '@/components/ProposalTimeline';
@@ -78,10 +79,6 @@ const STATUS_STYLES: Record<string, string> = {
   rechazado: 'bg-red-500/20 text-red-300',
   expirado: 'bg-red-500/20 text-red-300',
 };
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
-}
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('es-CO', {

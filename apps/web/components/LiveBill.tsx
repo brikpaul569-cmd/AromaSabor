@@ -2,7 +2,7 @@
 
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { usePlateStore } from '@/stores/plate-store';
-import { calculateQuotation } from '@aromasabor/utils';
+import { calculateQuotation, formatPrice } from '@aromasabor/utils';
 import { useMemo } from 'react';
 
 export interface LiveBillItem {
@@ -13,10 +13,6 @@ export interface LiveBillItem {
 
 interface LiveBillProps {
   items: LiveBillItem[];
-}
-
-function formatPrice(n: number): string {
-  return '$' + n.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 export default function LiveBill({ items }: LiveBillProps) {

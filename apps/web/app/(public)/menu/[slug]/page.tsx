@@ -12,6 +12,7 @@ import PlateItemPopover from '@/components/PlateItemPopover';
 
 import PricingBreakdown from '@/components/PricingBreakdown';
 import type { PricingItem } from '@/components/PricingBreakdown';
+import { formatPrice } from '@aromasabor/utils';
 
 interface MenuCategory {
   _id: string;
@@ -45,10 +46,6 @@ const fallbackColors = [
   'bg-amber-800/60', 'bg-blue-800/50', 'bg-purple-800/50',
   'bg-pink-800/50', 'bg-indigo-800/50',
 ];
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
-}
 
 export default function PublicMenuPage() {
   const params = useParams();

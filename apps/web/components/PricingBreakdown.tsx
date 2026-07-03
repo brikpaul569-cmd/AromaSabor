@@ -1,6 +1,6 @@
 'use client';
 
-import { calculateQuotation } from '@aromasabor/utils';
+import { calculateQuotation, formatPrice } from '@aromasabor/utils';
 import { useTranslation } from '@/lib/i18n';
 
 export interface PricingItem {
@@ -14,10 +14,6 @@ interface PricingBreakdownProps {
   items: PricingItem[];
   guestCount: number;
   categories: { id: string; label: string }[];
-}
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 export default function PricingBreakdown({ items, guestCount, categories }: PricingBreakdownProps) {
