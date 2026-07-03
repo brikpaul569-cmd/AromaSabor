@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { UtensilsCrossed } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 
 export interface PlateItem {
@@ -73,6 +73,8 @@ export default function PlateView({ items, categoryOrder, onItemTap }: PlateView
     [items, categoryOrder],
   );
 
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+
   if (items.length === 0) {
     return (
       <div className="relative mx-auto flex aspect-square w-full max-w-sm items-center justify-center rounded-full bg-neutral-950/50 backdrop-blur-md shadow-2xl border border-white/5">
@@ -113,12 +115,14 @@ export default function PlateView({ items, categoryOrder, onItemTap }: PlateView
                 onClick={() => onItemTap?.(item)}
                 className="absolute inset-0 flex cursor-pointer items-center justify-center overflow-hidden rounded-full focus:outline-none focus:ring-2 focus:ring-white/30"
               >
-                {item.imageUrl ? (
+                {item.imageUrl && !brokenImages.has(item.imageUrl) ? (
                   <img
                     src={item.imageUrl}
                     alt={item.name}
                     className="h-full w-full object-contain"
                     draggable={false}
+                    loading="lazy"
+                    onError={() => setBrokenImages(prev => new Set(prev).add(item.imageUrl!))}
                   />
                 ) : (
                   <div

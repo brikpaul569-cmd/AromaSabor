@@ -340,7 +340,7 @@ export default function MenuEditorPage() {
                   <div key={item._id} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       {item.imageUrl && (
-                        <img src={item.imageUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                        <img src={item.imageUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                       )}
                       <div className="min-w-0">
                         <p className="text-sm font-medium">{item.name}</p>
@@ -394,7 +394,7 @@ export default function MenuEditorPage() {
                   placeholder="https://..."
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
                 {itemImageUrl && (
-                  <img src={itemImageUrl} alt="" className="mt-2 max-h-16 rounded object-contain" />
+                  <img src={itemImageUrl} alt="" className="mt-2 max-h-16 rounded object-contain" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                 )}
               </div>
               <div>
