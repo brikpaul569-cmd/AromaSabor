@@ -92,6 +92,17 @@ export class MenusService {
     if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId)) {
       throw new NotFoundException('Invalid ID');
     }
+    // Validate imageUrl if provided
+    if (item.imageUrl !== undefined) {
+      if (typeof item.imageUrl !== 'string' || item.imageUrl.length > 2048) {
+        throw new BadRequestException('imageUrl must be a string with max 2048 characters');
+      }
+      try {
+        new URL(item.imageUrl);
+      } catch {
+        throw new BadRequestException('imageUrl must be a valid URL');
+      }
+    }
     const menu = await this.menuModel.findOneAndUpdate(
       { _id: menuId, 'categories._id': categoryId },
       { $push: { 'categories.$.items': item } },
@@ -109,6 +120,17 @@ export class MenusService {
   ) {
     if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId) || !Types.ObjectId.isValid(itemId)) {
       throw new NotFoundException('Invalid ID');
+    }
+    // Validate imageUrl if provided
+    if (data.imageUrl !== undefined) {
+      if (typeof data.imageUrl !== 'string' || data.imageUrl.length > 2048) {
+        throw new BadRequestException('imageUrl must be a string with max 2048 characters');
+      }
+      try {
+        new URL(data.imageUrl);
+      } catch {
+        throw new BadRequestException('imageUrl must be a valid URL');
+      }
     }
     const update: Record<string, any> = {};
     if (data.name !== undefined) update['categories.$[cat].items.$[item].name'] = data.name;
