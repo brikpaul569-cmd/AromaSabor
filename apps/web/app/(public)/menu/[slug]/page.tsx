@@ -130,20 +130,16 @@ export default function PublicMenuPage() {
   }, []);
 
   const handleSubmitPlate = useCallback(async () => {
-    console.log('[submit] handleSubmitPlate called', { selections, menu, selectionsEmpty: Object.keys(selections).length === 0 });
-
     // Build selected items from store + menu data
     const flatItems: PlateItem[] = [];
     if (menu) {
       for (const [catId, items] of Object.entries(selections)) {
         const cat = menu.categories.find((c) => c._id === catId);
-        console.log('[submit] category lookup', { catId, found: !!cat });
         for (const item of items) {
           flatItems.push({ ...item, categoryId: catId, categoryLabel: cat?.label });
         }
       }
     }
-    console.log('[submit] flatItems', { length: flatItems.length, items: flatItems });
 
     if (flatItems.length === 0) {
       setSubmitError(t('plate.submitErrorNoItems'));
@@ -154,12 +150,10 @@ export default function PublicMenuPage() {
     setSubmitError(null);
     try {
       const submitItems = flatItems.map((i) => ({ _id: i._id, categoryId: i.categoryId }));
-      console.log('[submit] sending request', { slug, submitItems, guestCount });
       const result = await api.post<{ token: string; url: string }>(
         `/menus/${slug}/submit-plate`,
         { items: submitItems, guestCount, clientName: clientName || undefined, notes: notes || undefined },
       );
-      console.log('[submit] success', result);
       router.push(result.url);
     } catch (err: any) {
       console.error('[submit] error', err);
