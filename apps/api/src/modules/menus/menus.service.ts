@@ -87,7 +87,7 @@ export class MenusService {
   async addItem(
     menuId: string,
     categoryId: string,
-    item: { name: string; description?: string; pricePerPortion: number; portionGrams?: number; unit?: string; isAvailable?: boolean },
+    item: { name: string; description?: string; pricePerPortion: number; portionGrams?: number; unit?: string; isAvailable?: boolean; imageUrl?: string },
   ) {
     if (!Types.ObjectId.isValid(menuId) || !Types.ObjectId.isValid(categoryId)) {
       throw new NotFoundException('Invalid ID');
