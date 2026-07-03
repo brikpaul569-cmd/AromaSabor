@@ -98,9 +98,10 @@ export class ProposalsService {
       const menuItem = cat.items.find((i) => i._id?.toString() === sel._id);
       if (!menuItem) throw new BadRequestException(`Item ${sel._id} not found in category ${cat.label}`);
 
-      // Check if this category already has an item (enforce maxItems = 1 for simplicity)
-      if (proposalItems.some((pi) => pi.categoryId === (cat._id?.toString() || cat.id))) {
-        throw new BadRequestException(`Only one item allowed per category (${cat.label})`);
+      // Check if this category already has the maximum allowed items
+      const currentCount = proposalItems.filter((pi) => pi.categoryId === (cat._id?.toString() || cat.id)).length;
+      if (currentCount >= cat.maxItems) {
+        throw new BadRequestException(`Maximum ${cat.maxItems} item(s) allowed per category (${cat.label})`);
       }
 
       proposalItems.push({
