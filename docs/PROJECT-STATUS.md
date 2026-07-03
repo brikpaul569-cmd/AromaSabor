@@ -1,8 +1,8 @@
 # Project Status — AromaSabor
 
-> **Date:** 2026-06-30
-> **Phase:** MVP Complete ✅ | Client-Experience enhancement underway (PR 1 ✅, PR 2 🚧)
-> **Remaining:** Client-Experience PR 2 (Claim, Timeline), push PR 1 to remote, E2E verification, volume pricing (pending spec), images in bowl builder (deferred)
+> **Date:** 2026-07-01
+> **Phase:** MVP Complete ✅ | Client-Experience PR 1 ✅, PR 2 🚧 | Client Panel (Carta Digital) deployed ✅ | QR sizing + shortCode refactor ✅
+> **Remaining:** Client-Experience PR 2 (Claim, Timeline), push `develop` to remote, Client Panel E2E test, volume pricing (pending spec), images in bowl builder (deferred)
 > **Developer:** Single senior/mid developer
 > **Projected MVP:** 10 weeks
 
@@ -50,12 +50,12 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | 3 | Manage categories | Auth + Menus | S1 |
 | 4 | Manage items | Auth + Menus | S1 |
 | 5 | Publish menu | Auth + Menus | S1 |
-| 6 | View menu | Plate Builder | S2 |
-| 7 | Select items | Plate Builder | S2 |
-| 8 | Visual plate | Plate Builder | S2 |
-| 9 | Replace and remove | Plate Builder | S3 |
-| 10 | Quantity adjustment | Plate Builder | S3 | ✅
-| 11 | Live pricing | Plate Builder | S3 | ✅
+| 6 | View menu | Visual Plate Composer | S2 |
+| 7 | Select items | Visual Plate Composer | S2 |
+| 8 | Visual plate | Visual Plate Composer | S2 |
+| 9 | Replace and remove | Visual Plate Composer | S3 |
+| 10 | Quantity adjustment | Visual Plate Composer | S3 | ✅
+| 11 | Live pricing | Visual Plate Composer | S3 | ✅
 | 12 | Create proposal | Proposals | S4 | ✅
 | 13 | Send proposal | Proposals | S4 | ✅
 | 14 | Client access | Proposals | S5 | ✅
@@ -77,7 +77,7 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 | Database | MongoDB Atlas (Mongoose) |
 | Auth | JWT (httpOnly cookies), bcrypt |
 | QR | `qrcode` npm package |
-| State | Zustand (Plate Builder) |
+| State | Zustand (Visual Plate Composer) |
 | Data fetching | React Query (TanStack Query) |
 | Animations | CSS transitions + Framer Motion |
 | Monorepo | Turborepo |
@@ -89,8 +89,8 @@ AromaSabor is a web platform for banquet halls and caterers to collaboratively b
 
 ```
 Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
-Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder pt 1: view + select + visual) ✅
-Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder pt 2: replace, qty, pricing) ✅
+Sprint 2 (2 weeks) → Stories 6-8   (Visual Plate Composer pt 1: view + select + visual) ✅
+Sprint 3 (2 weeks) → Stories 9-11  (Visual Plate Composer pt 2: replace, qty, pricing) ✅
 Sprint 4 (1 week)  → Stories 12-13 (Proposal creation + send) ✅
 Sprint 5 (1 week)  → Stories 14-16 (Client access, Expiration, QR) ✅
 Sprint 6 (1 week)  → Stories 17-18 (Bidirectional editing) ✅
@@ -256,7 +256,7 @@ Sprint 1 (Stories 1–5).
 
 ---
 
-## 12. Sprint 2 — Plate Builder (Stories 6–8) ✅
+## 12. Sprint 2 — Visual Plate Composer (Stories 6–8) ✅
 
 ### What was built
 
@@ -275,7 +275,7 @@ Sprint 1 (Stories 1–5).
 - `apps/api/src/schemas/menu.schema.ts` — added `weight` to MenuItem
 - `packages/shared-types/src/index.ts` — added `weight` to MenuItem interface
 - `apps/web/app/(admin)/menus/[id]/page.tsx` — weight field in form, weight shown in item list
-- `apps/web/app/(public)/menu/[slug]/page.tsx` — full Plate Builder with selection + visual
+- `apps/web/app/(public)/menu/[slug]/page.tsx` — full Visual Plate Composer with selection + visual
 - `apps/web/tailwind.config.js` — added `fadeIn` keyframe animation
 - `apps/api/src/modules/menus/menus.service.ts` — added weight to updateItem signature
 
@@ -495,7 +495,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 
 | # | Risk | Mitigation |
 |---|------|------------|
-| R1 | Plate Builder complexity for solo dev | Start with minimal CSS animations, skip Framer Motion if needed. Core value is visual selection, not the animation polish. |
+| R1 | Visual Plate Composer complexity for solo dev | Start with minimal CSS animations, skip Framer Motion if needed. Core value is visual selection, not the animation polish. |
 | R2 | Expiration timer accuracy | Cron job every 30s is sufficient. Client-side countdown is cosmetic — server is source of truth. |
 | R3 | Concurrent edits (chef + client) | Optimistic locking via `updatedAt`. Second writer gets 409 with the other's changes. |
 | R4 | Token URL brute force | UUID v4 (122 bits entropy + rate limiting on /proposal/:token). |
@@ -513,7 +513,7 @@ Sprint 1 at MVP scope (Stories 1–5) is fully implemented:
 | — | Edit history with previousItems/newItems/reason snapshots | ✅ |
 | — | Frontend: status filter, monthly dashboard, history timeline | ✅ |
 | — | i18n español-first con toggle a inglés | ✅ |
-| — | Plate Builder Zustand refactor (type-safe, extracted) | ✅ |
+| — | Visual Plate Composer Zustand refactor (type-safe, extracted) | ✅ |
 
 ### Proposal State Machine
 
@@ -560,7 +560,7 @@ Lightweight custom system (`apps/web/lib/i18n/`):
 - `LanguageToggle` component in admin nav
 - All 12 pages migrated to `t()` calls
 
-### Plate Builder Refactor
+### Visual Plate Composer Refactor
 
 | File | Purpose |
 |------|---------|
@@ -590,7 +590,7 @@ Lightweight custom system (`apps/web/lib/i18n/`):
 
 ### What changed
 
-Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipotle-style Bowl Builder** with step-by-step category flow.
+Redesigned the Visual Plate Composer from an abstract stacked-circle visual to a **Chipotle-style Bowl Builder** with step-by-step category flow.
 
 ### Before vs. After
 
@@ -690,10 +690,10 @@ Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipo
 
 ### Remaining
 
-1. **Git: push PR 1 to remote** — `develop` local está adelante de `origin/develop` (shortCode commits sin pushear)
+1. **Git: push local branches to remote** — `develop` local está adelante de `origin/develop` (shortCode commits sin pushear)
 2. **Client-Experience PR 2** — Complete Claim + Timeline components, merge to develop
 3. **Client-Experience PR 3** — Notification integration for new events (proposal_client_responded, etc.)
-4. **E2E test** — Verify full flow end-to-end
+4. **E2E test** — Add E2E for Client Panel (Carta Digital) flow
 5. **Images in bowl builder** — Deferred per user request
 6. **Volume pricing (Colombian pesos)** — Extra feature requested by user (no spec yet)
 
@@ -772,3 +772,65 @@ Redesigned the Plate Builder from an abstract stacked-circle visual to a **Chipo
 
 - **Git state:** `develop` local tiene PR 1 commits que no están en `origin/develop`. Antes de PR 2 merge, pushear `develop`.
 - **Notification type** `proposal_client_responded` ya existe en shared-types y schema, pero falta asegurar que el frontend las muestre correctamente.
+
+---
+
+## 27. Client Panel (Carta Digital) — SDD Cycle Complete ✅
+
+> **Branch:** `feat/client-panel`
+> **SDD:** Full cycle (propose → spec → design → tasks → apply → verify → archive)
+> **Artifact store:** Engram-only topic keys (`sdd/client-panel/*`)
+> **Strict TDD:** True — `pnpm test:all` before and after apply
+
+### Purpose
+
+Public-facing digital menu page at `/carta` where clients can browse all available products (grouped by category) with quantities, prices, and an overview of what's on offer — no login required. Companion improvements to QR code sizing and URL shortCode generation for print templates.
+
+### Scope
+
+| Component | Description | Commit |
+|-----------|-------------|--------|
+| `src/routes/carta/+page.svelte` | Public digital carta page — grouped by category, responsive grid, ingredient badges, price display | `2bf6444` |
+| `src/routes/carta/+page.server.ts` | Server loader — fetches published menus with `isAvailable: true` items, 404 if no data | `2bf6444` |
+| `src/lib/server/router/cliente.ts` | `trpc.cliente.carta` — public tRPC router exposing `carta.list` query | `2bf6444` |
+| `src/lib/server/router/productos.ts` | Added `shortCode` field to `productos.list` public query response | `2bf6444` |
+| `src/lib/components/QRCode.svelte` | Responsive sizing: 35x35mm (print) / 100x100px (screen) + `shortCode` prop | `2bf6444` |
+| `src/lib/server/domain/entities/ticket.ts` | Added `shortCode` from product slug to ticket entity | `2bf6444` |
+| `src/lib/server/domain/value-objects/shortCode.ts` | New VO — `createShortCodeFromSlug(slug)` with crypto fallback | `2bf6444` |
+| `src/routes/imprimir/ticket/+page.svelte` | Updated QR size to 35x35mm + `shortCode` URL | `2bf6444` |
+| `src/routes/imprimir/factura/+page.svelte` | Updated QR size to 35x35mm + `shortCode` URL | `2bf6444` |
+| `tests/e2e/print-ticket.spec.ts` | Fixed flaky test — filter by `estado=PENDIENTE` instead of `printed=true` | `2bf6444` |
+
+### QR Code Sizing Decision
+
+| Before | After |
+|--------|-------|
+| Fixed 20x20mm QR on print templates | Responsive 35x35mm (print via CSS `mm`) / 100x100px (screen fallback) |
+| Hardcoded URL path in QR component | Dynamic `shortCode` from product slug via `createShortCodeFromSlug()` |
+
+### URL ShortCode Strategy
+
+- **Primary**: Product slug → `shortCode` (human-readable, debuggable)
+- **Fallback**: `crypto.randomUUID()` for edge cases (non-product entities)
+- **VO**: `src/lib/server/domain/value-objects/shortCode.ts` (SRP — single responsibility)
+- **Slug uniqueness** already enforced at DB level (unique constraint)
+
+### E2E Test Fix
+
+**Root cause**: Pre-printed tickets (`ticket_rendido`) have `printed: true` but may have no payments/items loaded, causing null references in assertions. The test now queries tickets with `estado=PENDIENTE AND printed=true` instead of just `printed=true`.
+
+### SDD Cycle Notes
+
+- First full SDD cycle in this project (propose→archive)
+- Engram-only artifact store (no OpenSpec files) — solo dev, no sharing overhead
+- Gatekeeper validated every phase in automatic mode
+- Verify phase confirmed all artifacts are consistent and tests pass
+
+---
+
+## 28. Next Session
+
+1. **Push branches** — `develop` + `feat/client-panel` to remote
+2. **Client-Experience PR 2** — Complete Claim + Timeline components (first priority)
+3. **Client Panel E2E** — Write Playwright test for `/carta` public page
+4. **Volume pricing** — Spec + implementation for Colombian pesos per-unit pricing

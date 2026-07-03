@@ -41,13 +41,13 @@ aromasabor/
 │   │   │   └── proposals/      # Proposal management
 │       │   └── (public)/
 │       │       ├── menu/[slug]/    # Public menu view
-│       │       └── prop/[token]/   # Client proposal view (Plate Builder)
+│       │       └── prop/[token]/   # Client proposal view (Visual Plate Composer)
 │       ├── lib/
 │       │   ├── api.ts             # Fetch wrapper (credentials: include, error handling)
 │       │   └── utils.ts           # cn() helper (clsx + tailwind-merge)
 │       ├── components/            # Reusable UI (custom dark-theme components)
 │       ├── hooks/                  # Custom React hooks
-│       ├── stores/                 # Zustand stores (Plate Builder)
+│       ├── stores/                 # Zustand stores (Visual Plate Composer)
 │       ├── next.config.js
 │       ├── tailwind.config.js
 │       ├── tsconfig.json
@@ -84,7 +84,7 @@ Browser Request
        │
        ├── Public Routes  ──→  (public)/
        │   │                     ├── menu/[slug]    → Menu view (no auth)
-       │   │                     └── prop/[token]   → Proposal + Plate Builder (token-based)
+│       │                     └── prop/[token]   → Proposal + Visual Plate Composer (token-based)
        │
        └── Admin Routes  ──→  (admin)/
                                 ├── login           → Email + password form
@@ -120,7 +120,7 @@ Client opens /prop/:token
 GET /api/proposals/:token
        │
        ▼
-If valid + not expired → Show Plate Builder (items, quantities, live pricing)
+If valid + not expired → Show Visual Plate Composer (items, quantities, live pricing)
 If expired → Show "This proposal has expired. Request a new version."
 ```
 

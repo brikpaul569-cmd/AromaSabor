@@ -69,7 +69,7 @@
 
 ---
 
-## Sprint 2 — Plate Builder Visual
+## Sprint 2 — Visual Plate Composer
 
 **Duration:** 3 weeks (highest risk)
 **Goal:** Client can see a menu and build a plate visually
@@ -135,7 +135,7 @@
 | Day | Focus | Tasks |
 |-----|-------|-------|
 | 1 | Public proposal page | GET /public/proposal/:token, validate token + expiry |
-| 2 | Plate Builder on public page | Embed PlateBuilder for client |
+| 2 | Visual Plate Composer on public page | Embed Visual Plate Composer for client |
 | 3 | Expiration cron | @Cron every 30s, update expired proposals |
 | 4 | Expired screen | "This proposal has expired" — no content visible |
 | 5 | Client viewed tracking | Status → ACTIVE on first open, start timer UI |
@@ -217,7 +217,7 @@
 ```
 Sprint 0  │ ████████░░ 8 pts  (setup)
 Sprint 1  │ █████████████░ 13 pts (auth + menus)
-Sprint 2  │ █████████████████████░░ 21 pts (plate builder — highest risk)
+Sprint 2  │ █████████████████████░░ 21 pts (Visual Plate Composer — highest risk)
 Sprint 3  │ █████████████░░ 13 pts (proposal + expiration)
 Sprint 4  │ █████████████░░ 13 pts (negotiation)
 Sprint 5  │ ████████░░ 8 pts  (dashboard + polish)
@@ -225,4 +225,4 @@ Sprint 5  │ ████████░░ 8 pts  (dashboard + polish)
 Total     │ 76 pts → ~11 weeks
 ```
 
-**Historical note:** Sprint 2 (21 pts) is intentionally oversized because the Plate Builder is the highest-risk, highest-value component. If it overflows, steal days from Sprint 5 (lowest risk).
+**Historical note:** Sprint 2 (21 pts) is intentionally oversized because the Visual Plate Composer is the highest-risk, highest-value component. If it overflows, steal days from Sprint 5 (lowest risk).

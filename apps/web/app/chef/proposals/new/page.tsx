@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import PricingBreakdown from '@/components/PricingBreakdown';
+import { formatPrice } from '@aromasabor/utils';
 
 interface MenuItem {
   _id: string;
@@ -41,10 +42,6 @@ interface SelectedItem {
   portionGrams?: number;
   unit: string;
   quantity: number;
-}
-
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
 }
 
 function toDateInputValue(date: Date): string {

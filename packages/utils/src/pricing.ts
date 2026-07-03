@@ -28,6 +28,10 @@ export interface QuotationItem {
   quantity: number;
 }
 
+export function formatPrice(price: number): string {
+  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export function calculateQuotation(items: QuotationItem[]): QuotationResult {
   if (items.length === 0) {
     return { subtotal: 0, tax: 0, total: 0 };

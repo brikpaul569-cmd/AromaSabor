@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ApiClientError } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { formatPrice } from '@aromasabor/utils';
 
 interface MenuCategoryItem {
   _id: string;
@@ -33,10 +34,6 @@ interface Menu {
   isActive: boolean;
 }
 
-function formatPrice(price: number): string {
-  return '$' + price.toLocaleString('es-CO', { minimumFractionDigits: 2 });
-}
-
 export default function MenuEditorPage() {
   const params = useParams();
   const router = useRouter();
@@ -61,6 +58,7 @@ export default function MenuEditorPage() {
   const [itemCategoryId, setItemCategoryId] = useState('');
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
+  const [itemImageUrl, setItemImageUrl] = useState('');
   const [itemPrice, setItemPrice] = useState('');
   const [itemPortionGrams, setItemPortionGrams] = useState('');
   const [itemUnit, setItemUnit] = useState('gr');
@@ -93,7 +91,7 @@ export default function MenuEditorPage() {
   }
 
   function resetItemForm() {
-    setItemCategoryId(''); setItemName(''); setItemDescription('');
+    setItemCategoryId(''); setItemName(''); setItemDescription(''); setItemImageUrl('');
     setItemPrice(''); setItemPortionGrams(''); setItemUnit('gr');
     setItemAvailable(true); setEditingItemId(null); setEditingItemCatId(null);
     setShowItemForm(false);
@@ -160,6 +158,7 @@ export default function MenuEditorPage() {
       const updated = await api.post<Menu>(`/menus/${id}/categories/${itemCategoryId}/items`, {
         name: itemName,
         description: itemDescription || undefined,
+        imageUrl: itemImageUrl || undefined,
         pricePerPortion: parseFloat(itemPrice),
         portionGrams: itemPortionGrams ? parseInt(itemPortionGrams) : undefined,
         unit: itemUnit,
@@ -182,6 +181,7 @@ export default function MenuEditorPage() {
       const updated = await api.patch<Menu>(`/menus/${id}/categories/${editingItemCatId}/items/${editingItemId}`, {
         name: itemName,
         description: itemDescription || undefined,
+        imageUrl: itemImageUrl || undefined,
         pricePerPortion: parseFloat(itemPrice),
         portionGrams: itemPortionGrams ? parseInt(itemPortionGrams) : undefined,
         unit: itemUnit,
@@ -209,6 +209,7 @@ export default function MenuEditorPage() {
     setItemCategoryId(catId);
     setItemName(item.name);
     setItemDescription(item.description || '');
+    setItemImageUrl(item.imageUrl || '');
     setItemPrice(item.pricePerPortion.toString());
     setItemPortionGrams(item.portionGrams?.toString() || '');
     setItemUnit(item.unit || 'gr');
@@ -333,11 +334,16 @@ export default function MenuEditorPage() {
                 <p className="text-sm text-gray-500">{t('menus.editor.noItems')}</p>
               )}
               {cat.items.map((item) => (
-                <div key={item._id} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{item.name}</p>
-                    {item.description && <p className="truncate text-xs text-gray-500">{item.description}</p>}
-                  </div>
+                  <div key={item._id} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {item.imageUrl && (
+                        <img src={item.imageUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{item.name}</p>
+                        {item.description && <p className="truncate text-xs text-gray-500">{item.description}</p>}
+                      </div>
+                    </div>
                   <div className="flex items-center gap-3 ml-4 shrink-0">
                     {!item.isAvailable && <span className="text-xs text-red-400">{t('menus.editor.unavailable')}</span>}
                     {item.portionGrams && <span className="text-xs text-gray-500">{item.portionGrams}{item.unit || 'gr'}</span>}
@@ -378,6 +384,15 @@ export default function MenuEditorPage() {
                 <label className="text-sm text-gray-400">{t('menus.editor.itemDescription')}</label>
                 <input type="text" value={itemDescription} onChange={(e) => setItemDescription(e.target.value)}
                   className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-400">{t('menus.editor.itemImage')}</label>
+                <input type="text" value={itemImageUrl} onChange={(e) => setItemImageUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="mt-1 w-full rounded-lg bg-white/10 px-4 py-2 text-sm outline-none ring-1 ring-white/20 focus:ring-white/40" />
+                {itemImageUrl && (
+                  <img src={itemImageUrl} alt="" className="mt-2 max-h-16 rounded object-contain" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-400">{t('menus.editor.itemPrice')}</label>

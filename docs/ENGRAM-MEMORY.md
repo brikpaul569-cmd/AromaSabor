@@ -24,14 +24,14 @@ Monorepo:    Turborepo (pnpm)
 Banquet halls and caterers manually manage menu proposals via WhatsApp, calls, and emails. No traceability, no visual experience, no collaborative negotiation.
 
 ### Solution
-A web platform where chefs create digital menus, send time-limited proposals to clients, and collaboratively negotiate via a visual plate builder.
+A web platform where chefs create digital menus, send time-limited proposals to clients, and collaboratively negotiate via the Visual Plate Composer.
 
 ### Key Business Rules
 1. Menus are **permanent** — they never expire.
 2. Proposals **expire** — default 20 minutes (hardcoded for MVP).
 3. Both chef and client can **edit** the proposal.
 4. Each edit generates an **in-app notification**.
-5. The **Plate Builder Visual** is the core differentiator.
+5. The **Visual Plate Composer** is the core differentiator.
 6. MVP is **web-only** (Next.js 15 + NestJS).
 7. No mobile app, no Socket.IO, no WhatsApp, no OTP, no FCM.
 
@@ -46,7 +46,7 @@ A web platform where chefs create digital menus, send time-limited proposals to 
 4. Add items (name, image URL, portion grams, price per portion)
 5. Publish menu (activate, public URL)
 
-### Track 2 — Plate Builder (Sprint 2-3)
+### Track 2 — Visual Plate Composer (Sprint 2-3)
 6. View public menu with categories and items
 7. Select items by tapping categories
 8. Visual plate: items stack in centered view with CSS animations
@@ -57,7 +57,7 @@ A web platform where chefs create digital menus, send time-limited proposals to 
 ### Track 3 — Proposals (Sprint 4-5)
 12. Chef creates a proposal in DRAFT (pre-selects items, sets client/event info)
 13. Chef sends proposal → status SENT, generates UUID token, starts 20min timer
-14. Client opens `/prop/:token` → sees Plate Builder, status becomes ACTIVE
+14. Client opens `/prop/:token` → sees Visual Plate Composer, status becomes ACTIVE
 15. Cron job expires proposals every 30s → EXPIRED screen (no content visible)
 16. Chef downloads QR code for any sent/active proposal
 
@@ -106,8 +106,8 @@ A web platform where chefs create digital menus, send time-limited proposals to 
 
 ```
 Sprint 1 (2 weeks) → Stories 1-5   (Auth + Menus) ✅
-Sprint 2 (2 weeks) → Stories 6-8   (Plate Builder: view + select + visual) ✅
-Sprint 3 (2 weeks) → Stories 9-11  (Plate Builder: replace ✅ + qty ✅ + pricing ✅)
+Sprint 2 (2 weeks) → Stories 6-8   (Visual Plate Composer: view + select + visual) ✅
+Sprint 3 (2 weeks) → Stories 9-11  (Visual Plate Composer: replace ✅ + qty ✅ + pricing ✅)
 Sprint 4 (1 week)  → Stories 12-13 (Proposal: create + send)
 Sprint 5 (1 week)  → Stories 14-16 (Proposal: access + expiration + QR)
 Sprint 6 (1 week)  → Stories 17-18 (Negotiation: edits)

@@ -90,7 +90,7 @@ export class MenusController {
   addItem(
     @Param('id') id: string,
     @Param('categoryId') categoryId: string,
-    @Body() body: { name: string; description?: string; pricePerPortion: number; portionGrams?: number; unit?: string; isAvailable?: boolean },
+    @Body() body: { name: string; description?: string; pricePerPortion: number; portionGrams?: number; unit?: string; isAvailable?: boolean; imageUrl?: string },
   ) {
     return this.menusService.addItem(id, categoryId, body);
   }
