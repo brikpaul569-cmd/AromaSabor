@@ -4,6 +4,7 @@ export interface CategoryItem {
   _id: string;
   name: string;
   description?: string;
+  imageUrl?: string;
   portionGrams?: number;
   pricePerPortion: number;
   unit: string;
